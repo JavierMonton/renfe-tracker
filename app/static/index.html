@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Renfe Tracker</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1><a href="#/">Renfe Tracker</a></h1>
+  </header>
+
+  <main>
+    <!-- Home: tracked trips table -->
+    <section id="view-home" class="view" hidden>
+      <a href="#/search" class="btn btn-primary">Track new trip</a>
+      <div id="home-content" class="trips-table-wrap"></div>
+    </section>
+
+    <!-- Search: form -->
+    <section id="view-search" class="view" hidden>
+      <a href="#/" class="nav-back">← Back to trips</a>
+      <div class="search-form-card">
+        <h2>Search trains</h2>
+        <form id="search-form" aria-label="Search trains by date and route">
+          <div class="form-group">
+            <label for="search-date">Date</label>
+            <input type="date" id="search-date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label for="search-origin">Origin</label>
+            <select id="search-origin" name="origin" required>
+              <option value="">Select origin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="search-destination">Destination</label>
+            <select id="search-destination" name="destination" required>
+              <option value="">Select destination</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Results: list of trains -->
+    <section id="view-results" class="view" hidden>
+      <a href="#/search" class="nav-back">← Back to search</a>
+      <div id="results-content"></div>
+    </section>
+
+    <!-- Trip detail: price events -->
+    <section id="view-trip" class="view" hidden>
+      <a href="#/" class="nav-back">← Back to trips</a>
+      <div id="trip-content"></div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

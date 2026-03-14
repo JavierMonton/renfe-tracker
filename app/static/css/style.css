@@ -1,0 +1,340 @@
+/* Renfe Tracker – Renfe-inspired styling (red/dark red accents, clean layout) */
+:root {
+  --renfe-red: #c4122e;
+  --renfe-dark: #8b0a1e;
+  --renfe-red-hover: #a00f26;
+  --bg-page: #f5f5f5;
+  --bg-card: #fff;
+  --text: #333;
+  --text-muted: #666;
+  --border: #ddd;
+  --focus-ring: var(--renfe-red);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg-page);
+  min-height: 100vh;
+}
+
+/* Header */
+.app-header {
+  background: var(--renfe-dark);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.app-header a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.app-header a:hover {
+  text-decoration: underline;
+}
+
+/* Main content */
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary {
+  background: var(--renfe-red);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--renfe-red-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: #eee;
+}
+
+/* Table (trips) */
+.trips-table-wrap {
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.trips-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trips-table th,
+.trips-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.trips-table th {
+  background: #f8f8f8;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.trips-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.trips-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.trips-table a {
+  color: var(--renfe-red);
+  text-decoration: none;
+}
+
+.trips-table a:hover {
+  text-decoration: underline;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Search form */
+.search-form-card {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  max-width: 480px;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 2px rgba(196, 18, 46, 0.2);
+}
+
+.form-actions {
+  margin-top: 1.25rem;
+}
+
+/* Results list */
+.results-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.result-card .train-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.result-card .train-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.result-card .train-meta {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.result-card .train-meta .price-range {
+  margin-left: 0.5rem;
+}
+
+.result-card .price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--renfe-dark);
+}
+
+.result-card .actions {
+  flex-shrink: 0;
+}
+
+/* Trip detail */
+.trip-detail-card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.trip-detail-card h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.trip-detail-card .trip-meta {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.events-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.events-list li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.events-list li:last-child {
+  border-bottom: none;
+}
+
+.events-list .price {
+  font-weight: 600;
+  color: var(--renfe-dark);
+}
+
+.events-list .date {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.events-empty {
+  color: var(--text-muted);
+  padding: 1rem 0;
+}
+
+/* Loading & error */
+.loading,
+.error-message {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.error-message {
+  color: #b00;
+  background: #fff5f5;
+  border-radius: 4px;
+}
+
+/* Navigation / back link */
+.nav-back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--renfe-red);
+  text-decoration: none;
+}
+
+.nav-back:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  main {
+    padding: 1rem;
+  }
+
+  .trips-table th,
+  .trips-table td {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .result-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .result-card .actions {
+    width: 100%;
+  }
+
+  .result-card .actions .btn {
+    width: 100%;
+  }
+}
