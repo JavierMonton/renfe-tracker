@@ -193,8 +193,16 @@ function loadResults() {
 
     const duration = train.duration_minutes != null ? formatDuration(train.duration_minutes) : "";
     let meta = duration;
-    if (train.estimated_price_min != null && train.estimated_price_max != null) {
-      meta += '<span class="price-range">(est. €' + train.estimated_price_min + "–€" + train.estimated_price_max + ")</span>";
+    // Show possible price range when backend provides estimated min/max; show partial (desde/hasta) when only one bound exists.
+    const fmtPrice = (n) => Number(n).toFixed(2).replace(".", ",");
+    const hasMin = train.estimated_price_min != null;
+    const hasMax = train.estimated_price_max != null;
+    if (hasMin && hasMax) {
+      meta += (duration ? ' · ' : '') + '<span class="price-range">Precio habitual: ' + fmtPrice(train.estimated_price_min) + ' € – ' + fmtPrice(train.estimated_price_max) + ' €</span>';
+    } else if (hasMin) {
+      meta += (duration ? ' · ' : '') + '<span class="price-range">Precio habitual: desde ' + fmtPrice(train.estimated_price_min) + ' €</span>';
+    } else if (hasMax) {
+      meta += (duration ? ' · ' : '') + '<span class="price-range">Precio habitual: hasta ' + fmtPrice(train.estimated_price_max) + ' €</span>';
     }
 
     let possibleBadge = "";

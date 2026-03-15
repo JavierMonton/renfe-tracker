@@ -19,6 +19,46 @@ def _train_key(t: dict[str, Any]) -> tuple[str, str]:
     return (t["train_type"], t["departure_time"])
 
 
+def _collect_prices_by_key(results: list[dict[str, Any]]) -> dict[tuple[str, str], list[float]]:
+    """From raw get_train_prices results, collect available prices by train key."""
+    by_key: dict[tuple[str, str], list[float]] = {}
+    for t in results:
+        if not t.get("available"):
+            continue
+        price = t.get("price")
+        if price is None:
+            continue
+        try:
+            p = float(price)
+        except (TypeError, ValueError):
+            continue
+        key = _train_key(t)
+        by_key.setdefault(key, []).append(p)
+    return by_key
+
+
+def _merge_prices_into(
+    into: dict[tuple[str, str], list[float]],
+    results: list[dict[str, Any]],
+) -> None:
+    """Merge available prices from results into the given dict (mutates into)."""
+    for key, prices in _collect_prices_by_key(results).items():
+        into.setdefault(key, []).extend(prices)
+
+
+def _price_ranges_by_key(
+    prices_by_key: dict[tuple[str, str], list[float]],
+) -> dict[tuple[str, str], tuple[float | None, float | None]]:
+    """For each key with at least one price, return (min, max). Otherwise (None, None)."""
+    out: dict[tuple[str, str], tuple[float | None, float | None]] = {}
+    for key, prices in prices_by_key.items():
+        if not prices:
+            out[key] = (None, None)
+        else:
+            out[key] = (min(prices), max(prices))
+    return out
+
+
 def _reference_dates(requested_date_str: str, max_dates: int = MAX_REFERENCE_DATES) -> list[str]:
     """
     Compute up to max_dates reference dates: same weekday as requested_date,
@@ -56,14 +96,16 @@ def _raw_to_api_train(
     *,
     is_possible: bool = False,
     inferred_from_date: str | None = None,
+    estimated_price_min: float | None = None,
+    estimated_price_max: float | None = None,
 ) -> dict[str, Any]:
-    """Convert raw get_train_prices item to API shape; add is_possible and optional inferred_from_date."""
+    """Convert raw get_train_prices item to API shape; add is_possible, optional inferred_from_date, and price range."""
     out: dict[str, Any] = {
         "name": t["train_type"],
         "price": t["price"] if t.get("available") else None,
         "duration_minutes": t["duration_minutes"],
-        "estimated_price_min": None,
-        "estimated_price_max": None,
+        "estimated_price_min": estimated_price_min,
+        "estimated_price_max": estimated_price_max,
         "is_possible": is_possible,
         "departure_time": t["departure_time"],
     }
@@ -91,13 +133,11 @@ def get_trains_with_possible(
         raise
 
     real_keys = {_train_key(t) for t in requested_results}
-    real_trains = [
-        _raw_to_api_train(t, is_possible=False)
-        for t in requested_results
-    ]
-    real_trains.sort(key=_dep_sort_key)
 
-    # Possible trains from reference dates
+    # Collect available prices by train key from requested date and reference dates (same weekday)
+    prices_by_key: dict[tuple[str, str], list[float]] = {}
+    _merge_prices_into(prices_by_key, requested_results)
+
     ref_dates = _reference_dates(requested_date)
     possible_by_key: dict[tuple[str, str], dict[str, Any]] = {}
 
@@ -107,12 +147,31 @@ def get_trains_with_possible(
         except Exception as e:
             logger.warning("get_train_prices failed for reference date %s: %s", ref_date, e)
             continue
+        _merge_prices_into(prices_by_key, ref_results)
         for t in ref_results:
             key = _train_key(t)
             if key not in real_keys and key not in possible_by_key:
                 possible_by_key[key] = _raw_to_api_train(
                     t, is_possible=True, inferred_from_date=ref_date
                 )
+
+    price_ranges = _price_ranges_by_key(prices_by_key)
+
+    real_trains = [
+        _raw_to_api_train(
+            t,
+            is_possible=False,
+            estimated_price_min=price_ranges.get(_train_key(t), (None, None))[0],
+            estimated_price_max=price_ranges.get(_train_key(t), (None, None))[1],
+        )
+        for t in requested_results
+    ]
+    real_trains.sort(key=_dep_sort_key)
+
+    for key, train in possible_by_key.items():
+        emin, emax = price_ranges.get(key, (None, None))
+        train["estimated_price_min"] = emin
+        train["estimated_price_max"] = emax
 
     possible_list = list(possible_by_key.values())
     possible_list.sort(key=_dep_sort_key)
