@@ -65,6 +65,31 @@
     </section>
   </main>
 
+  <!-- Track interval modal: "How often to track?" -->
+  <div id="track-interval-modal" class="modal" role="dialog" aria-labelledby="track-interval-title" aria-modal="true" hidden>
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__content">
+      <h2 id="track-interval-title" class="modal__title">How often to track?</h2>
+      <form id="track-interval-form">
+        <div class="form-group">
+          <label for="track-interval">Check interval</label>
+          <select id="track-interval" name="check_interval_minutes" aria-describedby="track-interval-desc">
+            <option value="60">Every 1 hour</option>
+            <option value="120">Every 2 hours</option>
+            <option value="360">Every 6 hours</option>
+            <option value="720">Every 12 hours</option>
+          </select>
+          <span id="track-interval-desc" class="form-hint">We will check the price at this interval.</span>
+        </div>
+        <div id="track-interval-error" class="modal__error" aria-live="polite" hidden></div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+          <button type="submit" id="track-interval-submit" class="btn btn-primary">Track</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -32,6 +32,15 @@ async function loadHome() {
   }
 }
 
+/** Current price = latest price_event if provided, else initial_price. For list API we only have initial_price. */
+function getCurrentPriceForTrip(trip, events) {
+  if (events && events.length > 0) {
+    const latest = events.reduce((a, e) => (e.detected_at > (a?.detected_at || "") ? e : a), null);
+    return latest?.price_detected != null ? latest.price_detected : trip.initial_price;
+  }
+  return trip.initial_price != null ? trip.initial_price : null;
+}
+
 function renderTripsTable(container, trips) {
   if (trips.length === 0) {
     container.innerHTML =
@@ -43,11 +52,28 @@ function renderTripsTable(container, trips) {
   table.className = "trips-table";
   table.setAttribute("role", "table");
   table.innerHTML =
-    "<thead><tr><th>Route</th><th>Date</th><th>Train</th><th></th></tr></thead><tbody></tbody>";
+    "<thead><tr><th>Route</th><th>Date</th><th>Train</th><th>Price / status</th><th></th></tr></thead><tbody></tbody>";
   const tbody = table.querySelector("tbody");
 
   trips.forEach((t) => {
     const tr = document.createElement("tr");
+    const notYetPublished = t.initial_price == null;
+    const currentPrice = getCurrentPriceForTrip(t, t.price_events);
+    let priceHtml;
+    if (notYetPublished) {
+      priceHtml = '<span class="trip-status trip-status--unpublished">Trip not yet published</span>';
+    } else {
+      priceHtml =
+        '<span class="trip-price">€' +
+        (currentPrice != null ? Number(currentPrice).toFixed(2) : "—") +
+        "</span>";
+    }
+    if (t.last_checked_at) {
+      priceHtml +=
+        '<div class="trip-last-checked">Last checked at: ' +
+        escapeHtml(formatLastCheckedAt(t.last_checked_at)) +
+        "</div>";
+    }
     tr.innerHTML =
       "<td>" +
       escapeHtml(t.origin + " → " + t.destination) +
@@ -55,6 +81,8 @@ function renderTripsTable(container, trips) {
       escapeHtml(t.date) +
       "</td><td>" +
       escapeHtml(t.train_identifier) +
+      "</td><td>" +
+      priceHtml +
       '</td><td><a href="#/trip/' +
       t.id +
       '">View details</a></td>';
@@ -235,7 +263,7 @@ function loadResults() {
       '">Track this trip</button></div>';
 
     li.querySelector("[data-track]").addEventListener("click", () => {
-      trackTrip(origin, destination, date, train.name || "");
+      openTrackModal(origin, destination, date, train);
     });
     ul.appendChild(li);
   });
@@ -259,24 +287,127 @@ function formatInferredDate(yyyyMmDd) {
   return yyyyMmDd;
 }
 
-async function trackTrip(origin, destination, date, train_identifier) {
-  try {
-    const res = await fetch(API + "/trips", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        origin,
-        destination,
-        date,
-        train_identifier,
-        check_interval_minutes: 60,
-      }),
-    });
-    if (!res.ok) throw new Error(res.statusText);
-    location.hash = "#/";
-  } catch (e) {
-    alert("Could not track trip: " + e.message);
+// Pending track params (set when opening modal, used on submit)
+let pendingTrack = null;
+
+function openTrackModal(origin, destination, date, train) {
+  pendingTrack = { origin, destination, date, train };
+  const modal = $("track-interval-modal");
+  const intervalSelect = $("track-interval");
+  const errorEl = $("track-interval-error");
+  if (intervalSelect) intervalSelect.value = "60";
+  if (errorEl) {
+    errorEl.textContent = "";
+    errorEl.hidden = true;
   }
+  if (modal) {
+    modal.hidden = false;
+    intervalSelect?.focus();
+  }
+}
+
+function closeTrackModal() {
+  pendingTrack = null;
+  const modal = $("track-interval-modal");
+  if (modal) modal.hidden = true;
+}
+
+function formatLastCheckedAt(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return iso;
+  }
+}
+
+function initTrackModal() {
+  const modal = $("track-interval-modal");
+  const form = $("track-interval-form");
+  const errorEl = $("track-interval-error");
+  const submitBtn = $("track-interval-submit");
+
+  function showError(msg) {
+    const fullMsg = "Could not track trip: " + (msg || "Unknown error");
+    if (errorEl) {
+      errorEl.textContent = fullMsg;
+      errorEl.hidden = false;
+    } else {
+      alert(fullMsg);
+    }
+  }
+
+  function hideError() {
+    if (errorEl) {
+      errorEl.textContent = "";
+      errorEl.hidden = true;
+    }
+  }
+
+  modal?.querySelectorAll("[data-modal-close], [data-modal-cancel]").forEach((el) => {
+    el.addEventListener("click", () => {
+      closeTrackModal();
+    });
+  });
+
+  modal?.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeTrackModal();
+    }
+  });
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!pendingTrack) return;
+    const { origin, destination, date, train } = pendingTrack;
+    const intervalSelect = $("track-interval");
+    const check_interval_minutes = intervalSelect ? parseInt(intervalSelect.value, 10) : 60;
+    const train_identifier = train?.name ?? "";
+    const initial_price = train?.price != null ? Number(train.price) : null;
+    const departure_time = train?.departure_time || undefined;
+
+    hideError();
+    if (submitBtn) {
+      submitBtn.disabled = true;
+    }
+
+    try {
+      const res = await fetch(API + "/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          origin,
+          destination,
+          date,
+          train_identifier,
+          check_interval_minutes,
+          initial_price,
+          ...(departure_time ? { departure_time } : {}),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const d = data.detail;
+        const msg =
+          typeof d === "string"
+            ? d
+            : Array.isArray(d) && d[0]?.msg
+              ? d[0].msg
+              : d?.message ?? res.statusText;
+        showError(msg);
+        return;
+      }
+      closeTrackModal();
+      location.hash = "#/";
+    } catch (e) {
+      const msg = e.message && /fetch|network/i.test(String(e.message)) ? "Failed to fetch" : (e.message || "Network error");
+      showError(msg);
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
 }
 
 // ----- Trip detail -----
@@ -296,8 +427,27 @@ async function loadTripDetail(id) {
 }
 
 function renderTripDetail(container, trip, events) {
+  const notYetPublished = trip.initial_price == null && !(events && events.length > 0);
+  const currentPrice = getCurrentPriceForTrip(trip, events);
+
   const card = document.createElement("div");
   card.className = "trip-detail-card";
+  let statusHtml = "";
+  if (notYetPublished) {
+    statusHtml = '<p class="trip-detail-status trip-status--unpublished">Trip not yet published</p>';
+  } else {
+    statusHtml =
+      '<p class="trip-detail-price">Current price: €' +
+      (currentPrice != null ? Number(currentPrice).toFixed(2) : "—") +
+      "</p>";
+  }
+  if (trip.last_checked_at) {
+    statusHtml +=
+      '<p class="trip-detail-last-checked">Last checked at: ' +
+      escapeHtml(formatLastCheckedAt(trip.last_checked_at)) +
+      "</p>";
+  }
+
   card.innerHTML =
     "<h2>" +
     escapeHtml(trip.origin + " → " + trip.destination) +
@@ -306,11 +456,17 @@ function renderTripDetail(container, trip, events) {
     escapeHtml(trip.date) +
     " · " +
     escapeHtml(trip.train_identifier) +
+    "</div>" +
+    '<div class="trip-detail-status-wrap">' +
+    statusHtml +
     "</div>";
 
   const eventsEl = document.createElement("div");
   if (events.length === 0) {
-    eventsEl.innerHTML = '<p class="events-empty">No price changes yet.</p>';
+    eventsEl.innerHTML =
+      '<p class="events-empty">' +
+      (notYetPublished ? "No price changes yet. Trip not yet published." : "No price changes yet.") +
+      "</p>";
   } else {
     const ul = document.createElement("ul");
     ul.className = "events-list";
@@ -372,5 +528,6 @@ function escapeHtml(s) {
   return div.innerHTML;
 }
 
+initTrackModal();
 window.addEventListener("hashchange", route);
 window.addEventListener("load", route);
