@@ -528,8 +528,11 @@ class RenfeScraper:
                     # Check availability
                     available = self._is_available(train_data)
 
+                    # Combined trips (e.g. regional + AVE): use tipoTrenUno and tipoTrenDos when both present
+                    train_type = self._build_train_type(train_data)
+
                     train = TrainRide(
-                        train_type=train_data.get("tipoTrenUno", "N/A"),
+                        train_type=train_type,
                         origin=origin_name,
                         destination=dest_name,
                         departure_time=dep_time,
@@ -546,6 +549,17 @@ class RenfeScraper:
                     continue
 
         return trains
+
+    @staticmethod
+    def _build_train_type(train_data: dict) -> str:
+        """Build train type string; for combined trips (e.g. regional + AVE) join tipoTrenUno and tipoTrenDos."""
+        one = (train_data.get("tipoTrenUno") or "").strip()
+        two = (train_data.get("tipoTrenDos") or "").strip()
+        if not one:
+            one = "N/A"
+        if not two or two == one:
+            return one
+        return one + " + " + two
 
     @staticmethod
     def _parse_time(time_str: str, date: datetime) -> datetime:

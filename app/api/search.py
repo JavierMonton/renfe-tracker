@@ -42,9 +42,9 @@ def _is_possible_trains_enabled() -> bool:
 def _mock_trains() -> list:
     """Fixed example trains when RENFE_MOCK=1 or RENFE_USE_MOCK=true (no real backend)."""
     return [
-        {"name": "AVE", "price": 45.50, "duration_minutes": 90, "estimated_price_min": None, "estimated_price_max": None, "is_possible": False},
-        {"name": "Avlo", "price": 25.00, "duration_minutes": 95, "estimated_price_min": None, "estimated_price_max": None, "is_possible": False},
-        {"name": "Alvia", "price": 38.20, "duration_minutes": 120, "estimated_price_min": None, "estimated_price_max": None, "is_possible": False},
+        {"name": "AVE", "price": 45.50, "duration_minutes": 90, "estimated_price_min": None, "estimated_price_max": None, "is_possible": False, "departure_time": "09:30"},
+        {"name": "Avlo", "price": 25.00, "duration_minutes": 95, "estimated_price_min": None, "estimated_price_max": None, "is_possible": False, "departure_time": "11:15"},
+        {"name": "Alvia", "price": 38.20, "duration_minutes": 120, "estimated_price_min": None, "estimated_price_max": None, "is_possible": False, "departure_time": "14:00"},
     ]
 
 
