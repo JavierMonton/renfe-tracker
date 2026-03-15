@@ -45,6 +45,13 @@ async def create_trip(
     return cursor.lastrowid
 
 
+async def delete_trip(conn: aiosqlite.Connection, trip_id: int) -> bool:
+    """Delete a trip by id. price_events are removed by CASCADE. Returns True if a row was deleted."""
+    cursor = await conn.execute("DELETE FROM trips WHERE id = ?", (trip_id,))
+    await conn.commit()
+    return cursor.rowcount > 0
+
+
 async def update_last_checked_at(conn: aiosqlite.Connection, trip_id: int, datetime_str: str) -> None:
     await conn.execute(
         "UPDATE trips SET last_checked_at = ? WHERE id = ?",

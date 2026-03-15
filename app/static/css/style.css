@@ -95,6 +95,17 @@ main {
   background: #eee;
 }
 
+.btn--small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.trips-table__actions {
+  white-space: nowrap;
+}
+.trips-table__actions .btn { margin-left: 0.5rem; }
+.trips-table__actions a + .btn { margin-left: 0.5rem; }
+
 /* Table (trips) */
 .trips-table-wrap {
   background: var(--bg-card);
@@ -336,6 +347,11 @@ main {
 }
 
 .trip-detail-status-wrap {
+  margin-bottom: 1rem;
+}
+
+.trip-detail-actions {
+  margin-top: 1rem;
   margin-bottom: 1rem;
 }
 

@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import Response
 from pydantic import BaseModel, field_validator
 
 from app.db.connection import get_connection
@@ -87,3 +88,13 @@ async def get_trip(trip_id: int, request: Request):
         raise HTTPException(status_code=404, detail="Trip not found")
     events = await db_events.list_by_trip(conn, trip_id)
     return {"trip": trip, "price_events": events}
+
+
+@router.delete("/{trip_id:int}")
+async def delete_trip(trip_id: int, request: Request):
+    """Remove a tracked trip. Stops scheduler from checking it (it only iterates over existing trips)."""
+    conn = await get_connection(request.app.state.db_path)
+    deleted = await db_trips.delete_trip(conn, trip_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    return Response(status_code=204)

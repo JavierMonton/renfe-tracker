@@ -83,9 +83,11 @@ function renderTripsTable(container, trips) {
       escapeHtml(t.train_identifier) +
       "</td><td>" +
       priceHtml +
-      '</td><td><a href="#/trip/' +
+      '</td><td class="trips-table__actions"><a href="#/trip/' +
       t.id +
-      '">View details</a></td>';
+      '">View details</a> <button type="button" class="btn btn-secondary btn--small trip-remove-btn" data-trip-id="' +
+      t.id +
+      '" aria-label="Remove tracked trip">Remove</button></td>';
     tbody.appendChild(tr);
   });
 
@@ -312,6 +314,61 @@ function closeTrackModal() {
   if (modal) modal.hidden = true;
 }
 
+// ----- Remove trip modal -----
+let pendingRemoveTripId = null;
+
+function openRemoveTripModal(tripId) {
+  pendingRemoveTripId = tripId;
+  const modal = $("remove-trip-modal");
+  if (modal) {
+    modal.hidden = false;
+    modal.querySelector("#remove-trip-confirm")?.focus();
+  }
+}
+
+function closeRemoveTripModal() {
+  pendingRemoveTripId = null;
+  const modal = $("remove-trip-modal");
+  if (modal) modal.hidden = true;
+}
+
+function initRemoveTripModal() {
+  const modal = $("remove-trip-modal");
+  const confirmBtn = $("remove-trip-confirm");
+
+  // Delegation: any .trip-remove-btn (list or detail) opens the modal
+  document.body.addEventListener("click", (e) => {
+    const btn = e.target.closest(".trip-remove-btn");
+    if (!btn) return;
+    e.preventDefault();
+    const tripId = parseInt(btn.getAttribute("data-trip-id"), 10);
+    if (!Number.isNaN(tripId)) openRemoveTripModal(tripId);
+  });
+
+  modal?.querySelectorAll("[data-remove-modal-close], [data-remove-modal-cancel]").forEach((el) => {
+    el.addEventListener("click", () => closeRemoveTripModal());
+  });
+
+  modal?.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeRemoveTripModal();
+  });
+
+  confirmBtn?.addEventListener("click", async () => {
+    if (pendingRemoveTripId == null) return;
+    const tripId = pendingRemoveTripId;
+    closeRemoveTripModal();
+    pendingRemoveTripId = null;
+    try {
+      const res = await fetch(API + "/trips/" + tripId, { method: "DELETE" });
+      if (!res.ok) throw new Error(res.status === 404 ? "Trip not found" : res.statusText);
+      await loadHome();
+      location.hash = "#/";
+    } catch (e) {
+      alert("Could not remove trip: " + (e.message || "Unknown error"));
+    }
+  });
+}
+
 function formatLastCheckedAt(iso) {
   if (!iso) return "";
   try {
@@ -459,6 +516,11 @@ function renderTripDetail(container, trip, events) {
     "</div>" +
     '<div class="trip-detail-status-wrap">' +
     statusHtml +
+    "</div>" +
+    '<div class="trip-detail-actions">' +
+    '<button type="button" class="btn btn-secondary trip-remove-btn" data-trip-id="' +
+    trip.id +
+    '" aria-label="Remove tracked trip">Remove trip</button>' +
     "</div>";
 
   const eventsEl = document.createElement("div");
@@ -529,5 +591,6 @@ function escapeHtml(s) {
 }
 
 initTrackModal();
+initRemoveTripModal();
 window.addEventListener("hashchange", route);
 window.addEventListener("load", route);
