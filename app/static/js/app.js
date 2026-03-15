@@ -289,6 +289,33 @@ function formatInferredDate(yyyyMmDd) {
   return yyyyMmDd;
 }
 
+// Single source of truth for track-interval options (minutes → label)
+const TRACK_INTERVAL_OPTIONS = [
+  { value: 1, label: "Every 1 minute" },
+  { value: 5, label: "Every 5 minutes" },
+  { value: 10, label: "Every 10 minutes" },
+  { value: 30, label: "Every 30 minutes" },
+  { value: 60, label: "Every 1 hour" },
+  { value: 120, label: "Every 2 hours" },
+  { value: 360, label: "Every 6 hours" },
+  { value: 720, label: "Every 12 hours" },
+];
+
+function renderTrackIntervalSelect(selectEl) {
+  if (!selectEl) return;
+  const defaultMinutes = 60;
+  selectEl.innerHTML = TRACK_INTERVAL_OPTIONS.map(
+    (o) =>
+      '<option value="' +
+      o.value +
+      '"' +
+      (o.value === defaultMinutes ? " selected" : "") +
+      ">" +
+      escapeHtml(o.label) +
+      "</option>"
+  ).join("");
+}
+
 // Pending track params (set when opening modal, used on submit)
 let pendingTrack = null;
 
@@ -384,6 +411,9 @@ function initTrackModal() {
   const form = $("track-interval-form");
   const errorEl = $("track-interval-error");
   const submitBtn = $("track-interval-submit");
+
+  // Populate interval dropdown from single source of truth
+  renderTrackIntervalSelect($("track-interval"));
 
   function showError(msg) {
     const fullMsg = "Could not track trip: " + (msg || "Unknown error");
