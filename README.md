@@ -2,6 +2,8 @@
 
 Track Renfe trains and prices (media/larga distancia). Self-hosted, runs in Docker.
 
+**Setup:** Dependencies are managed with [uv](https://github.com/astral-sh/uv). Run `uv sync` to create the environment and install from `pyproject.toml` / `uv.lock`.
+
 ## Run with Docker
 
 From the repo root:
@@ -22,13 +24,18 @@ The SQLite database and any app data are stored on the host in **`./data`**, whi
 
 If you see permission errors when the app writes to `./data`, run: `chown -R 1000:1000 ./data`.
 
-## Tests
+## Local development and tests
 
-Run tests locally (no Docker, no real Renfe calls; Renfe is mocked):
+This project uses **[uv](https://github.com/astral-sh/uv)** for dependencies and runs.
+
+From the repo root:
 
 ```bash
-pip install -r requirements.txt
-pytest
+uv sync
+uv run pytest
 ```
 
-Tests use a temporary database and mock the Renfe website so they are fast and reliable. To run with verbose output: `pytest -v`.
+- **`uv sync`** – creates `.venv` (if needed), installs the project and dependencies from `pyproject.toml` / `uv.lock`.
+- **`uv run pytest`** – runs tests in the project env (no Docker, no real Renfe calls; Renfe is mocked).
+
+Verbose tests: `uv run pytest -v`. Run the app locally: `uv run uvicorn app.main:app --reload`.
