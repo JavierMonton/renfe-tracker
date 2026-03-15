@@ -2,6 +2,18 @@
 import logging
 import os
 
+# Ensure scheduler and app logs are visible (INFO). Root may already be configured by uvicorn.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    force=True,
+)
+for _name in ("renfe_tracker", "app"):
+    logging.getLogger(_name).setLevel(logging.INFO)
+
+logger = logging.getLogger("renfe_tracker")
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -49,8 +61,12 @@ if os.path.isdir(static_dir):
 
 scheduler = AsyncIOScheduler()
 
+# Sweep interval: how often we look for due trips. Each trip is due when last_checked_at + check_interval_minutes.
+PRICE_CHECK_SWEEP_MINUTES = 1
+
+
 def _scheduler_heartbeat():
-    logging.getLogger("renfe_tracker").info("Scheduler heartbeat (every 60s)")
+    logger.info("Scheduler heartbeat (every 60s)")
 
 
 async def _run_price_check_job(db_path: str) -> None:
@@ -65,9 +81,21 @@ async def startup():
     await init_db(db_path)
     app.state.db_path = db_path
     await get_connection(db_path)
+
+    logger.info("Scheduler starting")
     scheduler.add_job(_scheduler_heartbeat, "interval", seconds=60, id="heartbeat")
-    scheduler.add_job(_run_price_check_job, "interval", minutes=5, id="price_check", args=[db_path])
+    scheduler.add_job(
+        _run_price_check_job,
+        "interval",
+        minutes=PRICE_CHECK_SWEEP_MINUTES,
+        id="price_check",
+        args=[db_path],
+    )
     scheduler.start()
+    logger.info(
+        "Scheduler started (price check sweep every %s min)",
+        PRICE_CHECK_SWEEP_MINUTES,
+    )
 
 @app.on_event("shutdown")
 async def shutdown():

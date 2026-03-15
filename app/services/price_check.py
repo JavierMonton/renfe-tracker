@@ -73,10 +73,24 @@ async def run_price_check(db_path: str) -> None:
     now = datetime.utcnow()
     now_str = now.strftime(_DATETIME_FMT)
 
+    due_trips = [t for t in all_trips if _is_due(t, now)]
+    logger.info(
+        "Running price check for tracked trips (total=%s, due=%s)",
+        len(all_trips),
+        len(due_trips),
+    )
+
     for trip in all_trips:
         if not _is_due(trip, now):
             continue
         trip_id = trip["id"]
+        logger.info(
+            "Scheduler checking trip %s (%s -> %s, %s)",
+            trip_id,
+            trip["origin"],
+            trip["destination"],
+            trip["date"],
+        )
         try:
             results = get_train_prices(
                 trip["origin"],
@@ -119,3 +133,6 @@ async def run_price_check(db_path: str) -> None:
             continue
         await db_events.insert_price_event(conn, trip_id, new_price)
         await db_trips.update_last_checked_at(conn, trip_id, now_str)
+
+    if due_trips:
+        logger.info("Price check run finished (%s trip(s) processed)", len(due_trips))
