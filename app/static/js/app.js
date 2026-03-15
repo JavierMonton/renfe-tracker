@@ -32,6 +32,14 @@ async function loadHome() {
   }
 }
 
+/** Human-readable check interval, e.g. "Every 60 min" or "Every 1 h". */
+function formatCheckInterval(minutes) {
+  if (minutes == null || minutes <= 0) return "—";
+  if (minutes < 60) return "Every " + minutes + " min";
+  const hours = minutes / 60;
+  return "Every " + (hours === 1 ? "1 h" : hours + " h");
+}
+
 /** Current price = latest price_event if provided, else initial_price. For list API we only have initial_price. */
 function getCurrentPriceForTrip(trip, events) {
   if (events && events.length > 0) {
@@ -52,7 +60,7 @@ function renderTripsTable(container, trips) {
   table.className = "trips-table";
   table.setAttribute("role", "table");
   table.innerHTML =
-    "<thead><tr><th>Route</th><th>Date</th><th>Train</th><th>Price / status</th><th></th></tr></thead><tbody></tbody>";
+    "<thead><tr><th>Route</th><th>Date</th><th>Train</th><th>Check interval</th><th>Price / status</th><th></th></tr></thead><tbody></tbody>";
   const tbody = table.querySelector("tbody");
 
   trips.forEach((t) => {
@@ -81,6 +89,8 @@ function renderTripsTable(container, trips) {
       escapeHtml(t.date) +
       "</td><td>" +
       escapeHtml(t.train_identifier) +
+      "</td><td>" +
+      escapeHtml(formatCheckInterval(t.check_interval_minutes)) +
       "</td><td>" +
       priceHtml +
       '</td><td class="trips-table__actions"><a href="#/trip/' +
@@ -543,6 +553,8 @@ function renderTripDetail(container, trip, events) {
     escapeHtml(trip.date) +
     " · " +
     escapeHtml(trip.train_identifier) +
+    " · Price checked " +
+    escapeHtml(formatCheckInterval(trip.check_interval_minutes).replace(/^Every /, "").toLowerCase()) +
     "</div>" +
     '<div class="trip-detail-status-wrap">' +
     statusHtml +
