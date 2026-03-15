@@ -76,12 +76,10 @@ function renderTripsTable(container, trips) {
         (currentPrice != null ? Number(currentPrice).toFixed(2) : "—") +
         "</span>";
     }
-    if (t.last_checked_at) {
-      priceHtml +=
-        '<div class="trip-last-checked">Last checked at: ' +
-        escapeHtml(formatLastCheckedAt(t.last_checked_at)) +
-        "</div>";
-    }
+    priceHtml +=
+      '<div class="trip-last-checked">Last checked at: ' +
+      (t.last_checked_at ? escapeHtml(formatLastCheckedAt(t.last_checked_at)) : "Not checked yet") +
+      "</div>";
     tr.innerHTML =
       "<td>" +
       escapeHtml(t.origin + " → " + t.destination) +
@@ -538,12 +536,12 @@ function renderTripDetail(container, trip, events) {
       (currentPrice != null ? Number(currentPrice).toFixed(2) : "—") +
       "</p>";
   }
-  if (trip.last_checked_at) {
-    statusHtml +=
-      '<p class="trip-detail-last-checked">Last checked at: ' +
-      escapeHtml(formatLastCheckedAt(trip.last_checked_at)) +
-      "</p>";
-  }
+  statusHtml +=
+    '<p class="trip-detail-last-checked">Last checked at: ' +
+    (trip.last_checked_at
+      ? escapeHtml(formatLastCheckedAt(trip.last_checked_at))
+      : "Not checked yet") +
+    "</p>";
 
   card.innerHTML =
     "<h2>" +
