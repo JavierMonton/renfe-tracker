@@ -189,12 +189,23 @@ function loadResults() {
 
   trains.forEach((train) => {
     const li = document.createElement("li");
-    li.className = "result-card";
+    li.className = "result-card" + (train.is_possible ? " result-card--possible" : "");
 
     const duration = train.duration_minutes != null ? formatDuration(train.duration_minutes) : "";
     let meta = duration;
     if (train.estimated_price_min != null && train.estimated_price_max != null) {
       meta += '<span class="price-range">(est. €' + train.estimated_price_min + "–€" + train.estimated_price_max + ")</span>";
+    }
+
+    let possibleBadge = "";
+    if (train.is_possible) {
+      possibleBadge =
+        '<div class="result-card__possible-badge-wrap">' +
+        '<span class="result-card__possible-badge">Tren posible – aún no publicado para esta fecha</span>' +
+        (train.inferred_from_date
+          ? '<span class="result-card__inferred-date">Inferido desde ' + escapeHtml(formatInferredDate(train.inferred_from_date)) + "</span>"
+          : "") +
+        "</div>";
     }
 
     li.innerHTML =
@@ -205,6 +216,7 @@ function loadResults() {
       '<div class="train-meta">' +
       meta +
       "</div>" +
+      possibleBadge +
       "</div>" +
       '<div class="price">€' +
       (train.price != null ? Number(train.price).toFixed(2) : "—") +
@@ -227,6 +239,15 @@ function formatDuration(minutes) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return m > 0 ? h + " h " + m + " min" : h + " h";
+}
+
+function formatInferredDate(yyyyMmDd) {
+  if (!yyyyMmDd) return "";
+  try {
+    const [y, m, d] = yyyyMmDd.split("-");
+    if (y && m && d) return d + "/" + m + "/" + y;
+  } catch {}
+  return yyyyMmDd;
 }
 
 async function trackTrip(origin, destination, date, train_identifier) {

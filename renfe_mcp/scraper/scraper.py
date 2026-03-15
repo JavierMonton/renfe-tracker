@@ -486,8 +486,11 @@ class RenfeScraper:
             logger.warning(f"Failed to extract train list. Response length: {len(response_text)} chars")
             raise RenfeParseError("Failed to extract train list from response")
 
+        # Renfe sometimes returns fullwidth/special chars that break JSON parsing (e.g. U+FF5C ｜)
+        json_str = match.group(1).replace("\uFF5C", "|")
+
         try:
-            data = json5.loads(match.group(1))
+            data = json5.loads(json_str)
             logger.debug(f"Parsed train list JSON successfully")
             return data
         except Exception as e:

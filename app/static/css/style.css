@@ -268,6 +268,36 @@ main {
   flex-shrink: 0;
 }
 
+/* Possible train (inferred, not yet published for this date) */
+.result-card--possible {
+  background: #f8f8f8;
+  border-color: #ccc;
+  border-style: dashed;
+}
+
+.result-card__possible-badge-wrap {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.result-card__possible-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: #eee;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.result-card__inferred-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* Trip detail */
 .trip-detail-card {
   background: var(--bg-card);
