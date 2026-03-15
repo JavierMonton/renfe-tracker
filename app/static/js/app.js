@@ -115,15 +115,15 @@ async function loadSearch() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date, origin: o, destination: d }),
       });
-      if (!res.ok) throw new Error(res.statusText);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.message || res.statusText);
       sessionStorage.setItem(
         "renfe_search",
         JSON.stringify({ date, origin: o, destination: d, trains: data.trains || [] })
       );
       location.hash = "#/results";
     } catch (e) {
-      alert("Search failed: " + e.message);
+      alert("Búsqueda fallida: " + e.message);
     }
   };
 }
