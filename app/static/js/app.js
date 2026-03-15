@@ -68,6 +68,18 @@ function renderTripsTable(container, trips) {
 // ----- Search -----
 async function loadSearch() {
   showView("view-search");
+
+  // Reset loading state so it never shows before the user clicks Search
+  const submitBtn = $("search-submit-btn");
+  const loadingEl = $("search-loading");
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Search";
+  }
+  if (loadingEl) {
+    loadingEl.hidden = true;
+  }
+
   const origin = $("search-origin");
   const dest = $("search-destination");
 
@@ -109,6 +121,14 @@ async function loadSearch() {
     const d = $("search-destination").value;
     if (!date || !o || !d) return;
 
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Buscando…";
+    }
+    if (loadingEl) {
+      loadingEl.hidden = false;
+    }
+
     try {
       const res = await fetch(API + "/search", {
         method: "POST",
@@ -124,6 +144,14 @@ async function loadSearch() {
       location.hash = "#/results";
     } catch (e) {
       alert("Búsqueda fallida: " + e.message);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Search";
+      }
+      if (loadingEl) {
+        loadingEl.hidden = true;
+      }
     }
   };
 }

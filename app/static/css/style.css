@@ -78,6 +78,13 @@ main {
   background: var(--renfe-red-hover);
 }
 
+.btn:disabled,
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .btn-secondary {
   background: var(--bg-card);
   color: var(--text);
@@ -180,6 +187,35 @@ main {
 
 .form-actions {
   margin-top: 1.25rem;
+}
+
+/* Search loading indicator (F1: only visible when [hidden] is false, i.e. after Search) */
+.search-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: #f0f4f8;
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.search-loading[hidden] {
+  display: none !important;
+}
+
+.search-loading .spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--renfe-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Results list */

@@ -1,17 +1,29 @@
-# Renfe Tracker – FastAPI app (Python 3.11 slim, non-root user, port 8000)
+# Renfe Tracker – FastAPI app (Python 3.11, Playwright/Chromium para sesión Renfe)
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies (no cache to keep image smaller)
+# Dependencias de sistema para Chromium (Playwright)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 libatk1.0-0 \
+    libatspi2.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 libgtk-3-0 libnspr4 \
+    libnss3 libxcomposite1 libxdamage1 libxfixes3 libxkbcommon0 libxrandr2 \
+    xdg-utils wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python y Playwright; instalar Chromium en ruta fija para el usuario de la app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN playwright install chromium
 
-# Application code
+# Código de la aplicación
 COPY app/ app/
 
-# Non-root user (UID 1000; if ./data has permission issues, chown 1000:1000 on host)
-RUN useradd -r -u 1000 appuser && chown -R appuser:appuser /app
+# Usuario no root; Chromium debe ser legible por appuser
+RUN useradd -r -u 1000 appuser \
+    && chown -R appuser:appuser /app \
+    && chown -R appuser:appuser /ms-playwright
 USER appuser
 
 # App writes DB to /data (mounted from host in compose)

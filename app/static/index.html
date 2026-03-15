@@ -40,8 +40,13 @@
               <option value="">Select destination</option>
             </select>
           </div>
+          <!-- F1: hidden by default; shown only after user clicks Search -->
+          <div id="search-loading" class="search-loading" aria-live="polite" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <span id="search-loading-text">Consultando Renfe… La búsqueda puede tardar 1-2 minutos.</span>
+          </div>
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="submit" id="search-submit-btn" class="btn btn-primary">Search</button>
           </div>
         </form>
       </div>
