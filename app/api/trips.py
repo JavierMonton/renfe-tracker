@@ -1,6 +1,7 @@
 """Trips API: list, create, get one."""
 import logging
-from typing import Optional
+from datetime import datetime
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
@@ -9,6 +10,7 @@ from pydantic import BaseModel, field_validator
 from app.db.connection import get_connection
 from app.db import trips as db_trips
 from app.db import price_events as db_events
+from app.db import price_samples as db_price_samples
 
 logger = logging.getLogger("renfe_tracker.trips")
 router = APIRouter(prefix="/trips", tags=["trips"])
@@ -22,6 +24,7 @@ class CreateTripBody(BaseModel):
     check_interval_minutes: int
     initial_price: Optional[float] = None
     departure_time: Optional[str] = None
+    estimated_prices: Optional[List[float]] = None
 
     @field_validator("check_interval_minutes")
     @classmethod
@@ -49,6 +52,10 @@ class CreateTripBody(BaseModel):
 async def list_trips(request: Request):
     conn = await get_connection(request.app.state.db_path)
     items = await db_trips.list_trips(conn)
+    for t in items:
+        emin, emax = await db_price_samples.get_min_max(conn, t["id"])
+        t["estimated_price_min"] = emin
+        t["estimated_price_max"] = emax
     return {"trips": items}
 
 
@@ -66,7 +73,17 @@ async def create_trip(body: CreateTripBody, request: Request):
             initial_price=body.initial_price,
             departure_time=body.departure_time,
         )
+        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        for p in body.estimated_prices or []:
+            try:
+                price_f = float(p)
+                await db_price_samples.upsert(conn, trip_id, price_f, now_str)
+            except (TypeError, ValueError):
+                pass
         trip = await db_trips.get_trip(conn, trip_id)
+        emin, emax = await db_price_samples.get_min_max(conn, trip_id)
+        trip["estimated_price_min"] = emin
+        trip["estimated_price_max"] = emax
         return trip
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -86,6 +103,9 @@ async def get_trip(trip_id: int, request: Request):
     trip = await db_trips.get_trip(conn, trip_id)
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
+    emin, emax = await db_price_samples.get_min_max(conn, trip_id)
+    trip["estimated_price_min"] = emin
+    trip["estimated_price_max"] = emax
     events = await db_events.list_by_trip(conn, trip_id)
     return {"trip": trip, "price_events": events}
 

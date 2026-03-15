@@ -98,6 +98,7 @@ def _raw_to_api_train(
     inferred_from_date: str | None = None,
     estimated_price_min: float | None = None,
     estimated_price_max: float | None = None,
+    estimated_prices: list[float] | None = None,
 ) -> dict[str, Any]:
     """Convert raw get_train_prices item to API shape; add is_possible, optional inferred_from_date, and price range."""
     out: dict[str, Any] = {
@@ -106,6 +107,7 @@ def _raw_to_api_train(
         "duration_minutes": t["duration_minutes"],
         "estimated_price_min": estimated_price_min,
         "estimated_price_max": estimated_price_max,
+        "estimated_prices": estimated_prices if estimated_prices is not None else [],
         "is_possible": is_possible,
         "departure_time": t["departure_time"],
     }
@@ -163,6 +165,7 @@ def get_trains_with_possible(
             is_possible=False,
             estimated_price_min=price_ranges.get(_train_key(t), (None, None))[0],
             estimated_price_max=price_ranges.get(_train_key(t), (None, None))[1],
+            estimated_prices=list(prices_by_key.get(_train_key(t), [])),
         )
         for t in requested_results
     ]
@@ -172,6 +175,7 @@ def get_trains_with_possible(
         emin, emax = price_ranges.get(key, (None, None))
         train["estimated_price_min"] = emin
         train["estimated_price_max"] = emax
+        train["estimated_prices"] = list(prices_by_key.get(key, []))
 
     possible_list = list(possible_by_key.values())
     possible_list.sort(key=_dep_sort_key)

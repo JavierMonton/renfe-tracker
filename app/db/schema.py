@@ -28,6 +28,16 @@ CREATE TABLE IF NOT EXISTS price_events (
 )
 """
 
+PRICE_SAMPLES_TABLE = """
+CREATE TABLE IF NOT EXISTS price_samples (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    price REAL NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    UNIQUE(trip_id, price)
+)
+"""
+
 # New columns added after initial schema (for existing DBs without them)
 TRIPS_ALTER_COLUMNS = [
     ("initial_price", "REAL"),
@@ -50,6 +60,7 @@ async def init_db(db_path: str) -> None:
     async with aiosqlite.connect(db_path) as conn:
         await conn.execute(TRIPS_TABLE)
         await conn.execute(PRICE_EVENTS_TABLE)
+        await conn.execute(PRICE_SAMPLES_TABLE)
         await conn.commit()
         for col, typ in TRIPS_ALTER_COLUMNS:
             await _add_column_if_missing(conn, "trips", col, typ)

@@ -76,6 +76,20 @@ function renderTripsTable(container, trips) {
         (currentPrice != null ? Number(currentPrice).toFixed(2) : "—") +
         "</span>";
     }
+    const listEstMin = t.estimated_price_min != null && t.estimated_price_min !== "" ? Number(t.estimated_price_min) : NaN;
+    const listEstMax = t.estimated_price_max != null && t.estimated_price_max !== "" ? Number(t.estimated_price_max) : NaN;
+    const hasEstMin = !Number.isNaN(listEstMin);
+    const hasEstMax = !Number.isNaN(listEstMax);
+    if (hasEstMin || hasEstMax) {
+      const fmtPrice = (n) => Number(n).toFixed(2).replace(".", ",");
+      if (hasEstMin && hasEstMax) {
+        priceHtml += '<div class="price-range">Precio habitual: ' + fmtPrice(listEstMin) + ' € – ' + fmtPrice(listEstMax) + ' €</div>';
+      } else if (hasEstMin) {
+        priceHtml += '<div class="price-range">Precio habitual: desde ' + fmtPrice(listEstMin) + ' €</div>';
+      } else {
+        priceHtml += '<div class="price-range">Precio habitual: hasta ' + fmtPrice(listEstMax) + ' €</div>';
+      }
+    }
     priceHtml +=
       '<div class="trip-last-checked">Last checked at: ' +
       (t.last_checked_at ? escapeHtml(formatLastCheckedAt(t.last_checked_at)) : "Not checked yet") +
@@ -461,6 +475,12 @@ function initTrackModal() {
     const train_identifier = train?.name ?? "";
     const initial_price = train?.price != null ? Number(train.price) : null;
     const departure_time = train?.departure_time || undefined;
+    let estimated_prices = Array.isArray(train?.estimated_prices) ? train.estimated_prices : [];
+    if (estimated_prices.length === 0 && train?.estimated_price_min != null && train?.estimated_price_max != null) {
+      const mn = Number(train.estimated_price_min);
+      const mx = Number(train.estimated_price_max);
+      if (!Number.isNaN(mn) && !Number.isNaN(mx)) estimated_prices = [mn, mx];
+    }
 
     hideError();
     if (submitBtn) {
@@ -478,6 +498,7 @@ function initTrackModal() {
           train_identifier,
           check_interval_minutes,
           initial_price,
+          estimated_prices,
           ...(departure_time ? { departure_time } : {}),
         }),
       });
@@ -535,6 +556,20 @@ function renderTripDetail(container, trip, events) {
       '<p class="trip-detail-price">Current price: €' +
       (currentPrice != null ? Number(currentPrice).toFixed(2) : "—") +
       "</p>";
+  }
+  const estMin = trip.estimated_price_min != null && trip.estimated_price_min !== "" ? Number(trip.estimated_price_min) : NaN;
+  const estMax = trip.estimated_price_max != null && trip.estimated_price_max !== "" ? Number(trip.estimated_price_max) : NaN;
+  const hasEstMin = !Number.isNaN(estMin);
+  const hasEstMax = !Number.isNaN(estMax);
+  if (hasEstMin || hasEstMax) {
+    const fmtPrice = (n) => Number(n).toFixed(2).replace(".", ",");
+    if (hasEstMin && hasEstMax) {
+      statusHtml += '<p class="trip-detail-estimated-range price-range">Precio habitual: ' + fmtPrice(estMin) + ' € – ' + fmtPrice(estMax) + ' €</p>';
+    } else if (hasEstMin) {
+      statusHtml += '<p class="trip-detail-estimated-range price-range">Precio habitual: desde ' + fmtPrice(estMin) + ' €</p>';
+    } else {
+      statusHtml += '<p class="trip-detail-estimated-range price-range">Precio habitual: hasta ' + fmtPrice(estMax) + ' €</p>';
+    }
   }
   statusHtml +=
     '<p class="trip-detail-last-checked">Last checked at: ' +

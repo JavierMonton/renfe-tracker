@@ -1,14 +1,16 @@
-/* Renfe Tracker – Renfe-inspired styling (red/dark red accents, clean layout) */
+/* Renfe Tracker – Renfe-inspired styling (purple→blue banner like venta.renfe.com) */
 :root {
-  --renfe-red: #c4122e;
-  --renfe-dark: #8b0a1e;
-  --renfe-red-hover: #a00f26;
+  --purple: #d1205c;
+  --primary: #4a2b7f;
+  --renfe-red: #d1205c;
+  --renfe-dark: #4a2b7f;
+  --renfe-red-hover: #a03078;
   --bg-page: #f5f5f5;
   --bg-card: #fff;
   --text: #333;
   --text-muted: #666;
   --border: #ddd;
-  --focus-ring: var(--renfe-red);
+  --focus-ring: var(--primary);
 }
 
 * {
@@ -25,9 +27,9 @@ body {
   min-height: 100vh;
 }
 
-/* Header */
+/* Header – gradient (Renfe-style: red-magenta → plum → dark indigo) */
 .app-header {
-  background: var(--renfe-dark);
+  background: linear-gradient(90deg, #d1205c 0%, #a03078 35%, #6d2d82 65%, #4a2b7f 100%);
   color: #fff;
   padding: 1rem 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
@@ -360,6 +362,13 @@ main {
   font-size: 1.1rem;
   color: var(--renfe-dark);
   margin: 0 0 0.25rem 0;
+}
+
+.trip-detail-status-wrap .price-range,
+.trip-detail-status-wrap .trip-detail-estimated-range {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0 0;
 }
 
 .trip-detail-last-checked {

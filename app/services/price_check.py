@@ -8,7 +8,9 @@ from datetime import datetime
 from app.db.connection import get_connection
 from app.db import trips as db_trips
 from app.db import price_events as db_events
+from app.db import price_samples as db_price_samples
 from app.renfe_lib import get_train_prices
+from app.services.possible_trains import _reference_dates
 
 logger = logging.getLogger(__name__)
 
@@ -130,9 +132,43 @@ async def run_price_check(db_path: str) -> None:
         current = _get_current_price(trip, events)
         if current is not None and abs(new_price - current) < 1e-6:
             await db_trips.update_last_checked_at(conn, trip_id, now_str)
-            continue
-        await db_events.insert_price_event(conn, trip_id, new_price)
+        else:
+            await db_events.insert_price_event(conn, trip_id, new_price)
         await db_trips.update_last_checked_at(conn, trip_id, now_str)
+
+        # Reference dates: same weekday, other weeks – upsert prices into price_samples for estimated range
+        for ref_date in _reference_dates(trip["date"]):
+            try:
+                ref_results = get_train_prices(
+                    trip["origin"],
+                    trip["destination"],
+                    ref_date,
+                    page=1,
+                    per_page=50,
+                )
+            except Exception as e:
+                logger.warning(
+                    "get_train_prices (ref date %s) failed for trip %s: %s",
+                    ref_date,
+                    trip_id,
+                    e,
+                )
+                continue
+            ref_match = _find_matching_train(
+                ref_results,
+                trip["train_identifier"],
+                trip.get("departure_time"),
+            )
+            if not ref_match:
+                continue
+            ref_price_raw = ref_match.get("price") if ref_match.get("available") else None
+            if ref_price_raw is None:
+                continue
+            try:
+                ref_price = float(ref_price_raw)
+            except (TypeError, ValueError):
+                continue
+            await db_price_samples.upsert(conn, trip_id, ref_price, now_str)
 
     if due_trips:
         logger.info("Price check run finished (%s trip(s) processed)", len(due_trips))
