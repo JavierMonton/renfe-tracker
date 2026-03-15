@@ -19,7 +19,7 @@ Use `app.renfe_lib`:
 - `find_stations(city_name)` – stations in a city.
 - `ensure_gtfs_updated()` – run GTFS update check.
 
-The search API uses this by default (`RENFE_BACKEND=gtfs`). No separate server process is required.
+The search API uses this (only backend). No separate server process is required.
 
 ## GTFS data path
 

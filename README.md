@@ -14,8 +14,7 @@ docker compose up --build
 
 Then open **http://localhost:8000**. To change the host port, set `PORT` in a `.env` file (e.g. `PORT=8080`) or when running.
 
-**Search (Renfe):** By default the app uses the **integrated Renfe library** (GTFS schedules + live price scraping). No separate MCP server or browser is required; everything runs inside this project. GTFS data is downloaded automatically on first use into `DATA_DIR/renfe_schedule` (in Docker, `/data/renfe_schedule`).  
-To use the old **Playwright/Chromium** backend instead, set `RENFE_BACKEND=playwright` (and use Docker or run `playwright install chromium` locally).  
+**Search (Renfe):** The app uses the **integrated Renfe library** (GTFS schedules + live price scraping via DWR). No separate MCP server or browser is required; everything runs inside this project. GTFS data is downloaded automatically on first use into `DATA_DIR/renfe_schedule` (in Docker, `/data/renfe_schedule`).  
 To test search **without** any real Renfe calls, set `RENFE_MOCK=1` (or `RENFE_USE_MOCK=true`): the API returns a fixed list of example trains.
 
 ## Data persistence

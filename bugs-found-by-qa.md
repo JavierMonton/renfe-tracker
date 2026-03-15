@@ -2,6 +2,8 @@
 
 Reporte generado para que el manager-architect pueda crear tareas. Detalle de pasos, llamadas y causas probables.
 
+**Note:** The app now uses only the **in-process Renfe library** (GTFS + DWR scraper via `app.renfe_lib`). The Playwright/Chromium backend has been removed. Bugs 2 and 3 below are **obsolete** for the Playwright scenario (no browser); 503 can still occur if the Renfe site or DWR service is unavailable, but the previous browser/timeout causes no longer apply.
+
 ---
 
 ## Bug 1: Mensaje de búsqueda visible antes de pulsar Search
@@ -92,8 +94,8 @@ Para confirmar si "funciona en algún escenario": ejecutar la app **con Docker**
 | Bug | Resumen | Acción sugerida |
 |-----|--------|------------------|
 | 1   | Mensaje de búsqueda visible antes de pulsar Search | **Cerrado.** Hecho: reset de estado al entrar en búsqueda + CSS para `[hidden]`; F1 verificado por frontend. |
-| 2   | POST /api/search devuelve 503 | **Mitigado.** Modo mock (`RENFE_MOCK=1`) para probar sin Chromium; mensajes 503 más claros (navegador no instalado vs timeout). Búsqueda real sigue requiriendo Docker o `playwright install chromium`. |
-| 3   | Búsqueda tarda y acaba en 503 | **Mitigado.** Misma solución que Bug 2; README actualizado con RENFE_MOCK y requisitos de búsqueda real. |
+| 2   | POST /api/search devuelve 503 | **Obsolete (Playwright removed).** Backend now uses only renfe_lib (GTFS + DWR). Mock `RENFE_MOCK=1` still available for testing without Renfe. |
+| 3   | Búsqueda tarda y acaba en 503 | **Obsolete (Playwright removed).** Same as Bug 2; no browser timeouts. |
 
 ---
 
