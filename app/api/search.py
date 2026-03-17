@@ -8,37 +8,26 @@ from pydantic import BaseModel
 
 from app.db.connection import get_connection
 from app.db import price_history as db_price_history
+from app.data.stations import RENFE_STATIONS
 
 logger = logging.getLogger("renfe_tracker.search")
 
 router = APIRouter(prefix="/search", tags=["search"])
 
-# Static options for frontend dropdowns. Must include at least Zaragoza, Calatayud, Tafalla (Phase 1.1).
-# Same list for origins and destinations; backend maps to Renfe codes in renfe_lib when needed.
-SEARCH_CITIES = [
-    # Original cities
-    "Madrid",
-    "Barcelona",
-    "Valencia",
-    "Sevilla",
-    "Bilbao",
-    "Málaga",
-    "Zaragoza",
-    "Calatayud",
-    "Tafalla",
-    # Additional cities from Renfe UI
-    "A CORUÑA",
-    "ALICANTE/ALACANT-TERMINAL",
-    "CÓRDOBA-JULIO ANGUITA",
-    "LLEIDA-PIRINEUS",
-    "MÁLAGA MARÍA ZAMBRANO",
-    "OURENSE",
-    "SANTIAGO DE COMPOSTELA-DANIEL CASTELAO",
-    "SEVILLA-SANTA JUSTA",
-]
 
-ORIGINS = SEARCH_CITIES
-DESTINATIONS = SEARCH_CITIES
+def _station_names() -> list[str]:
+    """
+    Station display names for origin/destination dropdowns.
+
+    Derived from RENFE_STATIONS so that options reflect the actual
+    stations that support both schedules and prices.
+    """
+    names = {s["name"] for s in RENFE_STATIONS if s.get("name")}
+    return sorted(names)
+
+
+ORIGINS = _station_names()
+DESTINATIONS = ORIGINS
 
 class SearchBody(BaseModel):
     date: str
