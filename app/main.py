@@ -74,6 +74,11 @@ async def _run_price_check_job(db_path: str) -> None:
     await run_price_check(db_path)
 
 
+async def _run_maintenance_job(db_path: str) -> None:
+    from app.services.maintenance import run_maintenance
+    await run_maintenance(db_path)
+
+
 @app.on_event("startup")
 async def startup():
     db_path = get_sqlite_path()
@@ -89,6 +94,14 @@ async def startup():
         "interval",
         minutes=PRICE_CHECK_SWEEP_MINUTES,
         id="price_check",
+        args=[db_path],
+    )
+    scheduler.add_job(
+        _run_maintenance_job,
+        "cron",
+        hour=3,
+        minute=0,
+        id="maintenance",
         args=[db_path],
     )
     scheduler.start()

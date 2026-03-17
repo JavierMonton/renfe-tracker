@@ -1,6 +1,6 @@
 """Trips API: list, create, get one."""
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
@@ -11,6 +11,7 @@ from app.db.connection import get_connection
 from app.db import trips as db_trips
 from app.db import price_events as db_events
 from app.db import price_samples as db_price_samples
+from app.db import price_history as db_price_history
 
 logger = logging.getLogger("renfe_tracker.trips")
 router = APIRouter(prefix="/trips", tags=["trips"])
@@ -73,13 +74,32 @@ async def create_trip(body: CreateTripBody, request: Request):
             initial_price=body.initial_price,
             departure_time=body.departure_time,
         )
-        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.utcnow()
+        now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+        # Seed per-trip samples and global history with estimated prices from the initial search.
+        try:
+            trip_date = date.fromisoformat(body.date)
+            weekday = trip_date.weekday()
+        except ValueError:
+            weekday = None
+
         for p in body.estimated_prices or []:
             try:
                 price_f = float(p)
-                await db_price_samples.upsert(conn, trip_id, price_f, now_str)
             except (TypeError, ValueError):
-                pass
+                continue
+            await db_price_samples.upsert(conn, trip_id, price_f, now_str)
+            if weekday is not None:
+                await db_price_history.upsert(
+                    conn,
+                    body.origin,
+                    body.destination,
+                    weekday,
+                    body.train_identifier,
+                    body.departure_time,
+                    price_f,
+                    now_str,
+                )
         trip = await db_trips.get_trip(conn, trip_id)
         emin, emax = await db_price_samples.get_min_max(conn, trip_id)
         trip["estimated_price_min"] = emin

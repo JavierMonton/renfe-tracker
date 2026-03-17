@@ -1,8 +1,15 @@
 """Search API: options (origins/destinations) and search (real Renfe trains)."""
 import os
+import logging
+from datetime import date as _date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
+
+from app.db.connection import get_connection
+from app.db import price_history as db_price_history
+
+logger = logging.getLogger("renfe_tracker.search")
 
 router = APIRouter(prefix="/search", tags=["search"])
 
@@ -80,7 +87,7 @@ def _trains_from_gtfs_backend(date: str, origin: str, destination: str) -> list:
 
 
 @router.post("")
-async def search(body: SearchBody):
+async def search(body: SearchBody, request: Request):
     if _is_mock_enabled():
         return {"trains": _mock_trains()}
     try:
@@ -93,4 +100,36 @@ async def search(body: SearchBody):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Renfe no disponible: {e}")
+
+    # Enrich estimated ranges with global price history (if any).
+    try:
+        trip_date = _date.fromisoformat(body.date)
+        weekday = trip_date.weekday()
+        conn = await get_connection(request.app.state.db_path)
+        for t in trains:
+            name = (t.get("name") or "").strip()
+            dep_time = t.get("departure_time")
+            if not name:
+                continue
+            gmin, gmax = await db_price_history.get_min_max(
+                conn,
+                body.origin,
+                body.destination,
+                weekday,
+                name,
+                dep_time,
+            )
+            if gmin is None and gmax is None:
+                continue
+            emin = t.get("estimated_price_min")
+            emax = t.get("estimated_price_max")
+            if gmin is not None:
+                emin = gmin if emin is None else min(emin, gmin)
+            if gmax is not None:
+                emax = gmax if emax is None else max(emax, gmax)
+            t["estimated_price_min"] = emin
+            t["estimated_price_max"] = emax
+    except Exception as e:
+        logger.warning("search: failed to apply global price history: %s", e)
+
     return {"trains": trains}

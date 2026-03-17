@@ -39,10 +39,17 @@ The application behavior can be tuned via environment variables (for Docker, set
 
 - **`RENFE_REFERENCE_WEEKS`**: number of same-weekday **reference weeks** used to estimate price ranges and infer possible trains.
   - **Usage**: affects both the **initial search** (when showing estimated price ranges and “possible trains”) and the **scheduler** (when it learns prices for tracked trips on other weeks).
-  - **Default**: `2` (if not set or invalid).
+  - **Default**: `10` (if not set or invalid).
   - **Allowed values**:
     - `0` – disable extra weeks (only uses the requested date).
     - `N >= 1` – use up to `N` same-weekday weeks (e.g. `RENFE_REFERENCE_WEEKS=10`).
+
+- **`RENFE_PRICE_HISTORY_DAYS`**: number of days to keep **global price history** used to improve future searches.
+  - **Usage**: affects how long historical prices are kept for `(origin, destination, weekday, train, departure_time)` combinations, which are then used to refine estimated ranges on new searches and new tracked trips.
+  - **Default**: `365` days (if not set or invalid).
+  - **Allowed values**:
+    - `0` – aggressively clean up everything older than “now” on the next maintenance run.
+    - `N >= 1` – keep history for `N` days; older entries are deleted by the daily maintenance job.
 
 More configuration options will be added here as they are introduced.
 

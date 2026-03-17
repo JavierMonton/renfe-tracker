@@ -1,4 +1,4 @@
-"""SQLite schema: trips and price_events."""
+"""SQLite schema: trips, price_events, and price samples."""
 import logging
 import aiosqlite
 
@@ -38,6 +38,20 @@ CREATE TABLE IF NOT EXISTS price_samples (
 )
 """
 
+PRICE_HISTORY_TABLE = """
+CREATE TABLE IF NOT EXISTS price_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    origin TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    weekday INTEGER NOT NULL,
+    train_identifier TEXT NOT NULL,
+    departure_time TEXT,
+    price REAL NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    UNIQUE(origin, destination, weekday, train_identifier, departure_time, price)
+)
+"""
+
 # New columns added after initial schema (for existing DBs without them)
 TRIPS_ALTER_COLUMNS = [
     ("initial_price", "REAL"),
@@ -61,6 +75,7 @@ async def init_db(db_path: str) -> None:
         await conn.execute(TRIPS_TABLE)
         await conn.execute(PRICE_EVENTS_TABLE)
         await conn.execute(PRICE_SAMPLES_TABLE)
+        await conn.execute(PRICE_HISTORY_TABLE)
         await conn.commit()
         for col, typ in TRIPS_ALTER_COLUMNS:
             await _add_column_if_missing(conn, "trips", col, typ)

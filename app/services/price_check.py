@@ -9,6 +9,7 @@ from app.db.connection import get_connection
 from app.db import trips as db_trips
 from app.db import price_events as db_events
 from app.db import price_samples as db_price_samples
+from app.db import price_history as db_price_history
 from app.renfe_lib import get_train_prices
 from app.services.possible_trains import _reference_dates
 
@@ -136,6 +137,19 @@ async def run_price_check(db_path: str) -> None:
             await db_events.insert_price_event(conn, trip_id, new_price)
         await db_trips.update_last_checked_at(conn, trip_id, now_str)
 
+        # Also record in global price history for future searches (exact trip date).
+        trip_weekday = date.fromisoformat(trip["date"]).weekday()
+        await db_price_history.upsert(
+            conn,
+            trip["origin"],
+            trip["destination"],
+            trip_weekday,
+            trip["train_identifier"],
+            trip.get("departure_time"),
+            new_price,
+            now_str,
+        )
+
         # Reference dates: same weekday, other weeks – upsert prices into price_samples for estimated range
         for ref_date in _reference_dates(trip["date"]):
             try:
@@ -169,6 +183,19 @@ async def run_price_check(db_path: str) -> None:
             except (TypeError, ValueError):
                 continue
             await db_price_samples.upsert(conn, trip_id, ref_price, now_str)
+
+            # And record reference-date price in global price history.
+            ref_weekday = date.fromisoformat(ref_date).weekday()
+            await db_price_history.upsert(
+                conn,
+                trip["origin"],
+                trip["destination"],
+                ref_weekday,
+                trip["train_identifier"],
+                trip.get("departure_time"),
+                ref_price,
+                now_str,
+            )
 
     if due_trips:
         logger.info("Price check run finished (%s trip(s) processed)", len(due_trips))
