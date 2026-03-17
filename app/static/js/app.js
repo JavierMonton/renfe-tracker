@@ -134,6 +134,16 @@ async function loadSearch() {
 
   const origin = $("search-origin");
   const dest = $("search-destination");
+  const swapBtn = $("swap-route-btn");
+
+  if (swapBtn && origin && dest) {
+    swapBtn.addEventListener("click", () => {
+      const originValue = origin.value;
+      origin.value = dest.value;
+      dest.value = originValue;
+      origin.focus();
+    });
+  }
 
   // Default date to tomorrow
   const dateInput = $("search-date");
