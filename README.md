@@ -28,6 +28,8 @@ Then open **http://localhost:8000**. To change the host port, set `PORT` in a `.
 
 The compose file mounts `./data` to `/data` and uses `restart: unless-stopped` so the app restarts automatically after failures or reboots. You can replace `./data` with your own path (e.g. `/srv/renfe-tracker/data`) so the database and config stay on your host.
 
+**PUID / PGID (optional):** The app process runs as root inside the container so it can always create and write the database on first run (avoids permission issues with bind-mounted volumes). If you set `PUID` and `PGID`, the entrypoint will chown `/data` and `/app` to that user when possible, so files on the host (e.g. `./data`) end up owned by your user. You can then run with your preferred ownership; the app will still run as root and write to `/data`.
+
 **Search (Renfe):** The app uses the **integrated Renfe library** (GTFS schedules + live price scraping via DWR). No separate MCP server or browser is required; everything runs inside this project. GTFS data is downloaded automatically on first use into `DATA_DIR/renfe_schedule` (in Docker, `/data/renfe_schedule`).  
 To test search **without** any real Renfe calls, set `RENFE_MOCK=1` (or `RENFE_USE_MOCK=true`): the API returns a fixed list of example trains.
 
@@ -35,7 +37,7 @@ To test search **without** any real Renfe calls, set `RENFE_MOCK=1` (or `RENFE_U
 
 The SQLite database and any app data are stored on the host in **`./data`**, which is mounted into the container at `/data` by `compose.yaml`. The DB file is `./data/renfe_tracker.db`. Renfe GTFS schedule data (used by the integrated backend) is stored in `./data/renfe_schedule` and is also persisted. Data survives container restarts and rebuilds; the service is configured with `restart: unless-stopped` so it will come back up automatically after failures or host reboots.
 
-If you see permission errors when the app writes to `./data`, run: `chown -R 1000:1000 ./data`.
+The entrypoint creates `/data` and the DB file if missing; the app runs as root so it can always write. You usually don’t need to fix permissions. If you want the data dir on the host owned by your user, run on the host after first start: `chown -R $(id -u):$(id -g) ./data` (or set PUID/PGID so the entrypoint chowns when possible).
 
 ## Local development and tests
 
