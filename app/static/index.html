@@ -29,10 +29,16 @@
             <input type="date" id="search-date" name="date" required>
           </div>
           <div class="form-group">
-            <label for="search-origin">Origin</label>
-            <select id="search-origin" name="origin" required>
-              <option value="">Select origin</option>
-            </select>
+            <label for="search-origin-input">Origin</label>
+            <input
+              type="text"
+              id="search-origin-input"
+              name="origin"
+              autocomplete="off"
+              placeholder="Start typing a station"
+              required
+            >
+            <div id="search-origin-suggestions" class="typeahead-suggestions" aria-live="polite"></div>
           </div>
           <div class="form-group">
             <button
@@ -45,10 +51,16 @@
             </button>
           </div>
           <div class="form-group">
-            <label for="search-destination">Destination</label>
-            <select id="search-destination" name="destination" required>
-              <option value="">Select destination</option>
-            </select>
+            <label for="search-destination-input">Destination</label>
+            <input
+              type="text"
+              id="search-destination-input"
+              name="destination"
+              autocomplete="off"
+              placeholder="Start typing a station"
+              required
+            >
+            <div id="search-destination-suggestions" class="typeahead-suggestions" aria-live="polite"></div>
           </div>
           <!-- F1: hidden by default; shown only after user clicks Search -->
           <div id="search-loading" class="search-loading" aria-live="polite" hidden>

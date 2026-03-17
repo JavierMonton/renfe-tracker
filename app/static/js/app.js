@@ -137,16 +137,18 @@ async function loadSearch() {
     loadingEl.hidden = true;
   }
 
-  const origin = $("search-origin");
-  const dest = $("search-destination");
+  const originInput = $("search-origin-input");
+  const destInput = $("search-destination-input");
+  const originSug = $("search-origin-suggestions");
+  const destSug = $("search-destination-suggestions");
   const swapBtn = $("swap-route-btn");
 
-  if (swapBtn && origin && dest) {
+  if (swapBtn && originInput && destInput) {
     swapBtn.addEventListener("click", () => {
-      const originValue = origin.value;
-      origin.value = dest.value;
-      dest.value = originValue;
-      origin.focus();
+      const originValue = originInput.value;
+      originInput.value = destInput.value;
+      destInput.value = originValue;
+      originInput.focus();
     });
   }
 
@@ -158,34 +160,67 @@ async function loadSearch() {
     dateInput.value = tomorrow.toISOString().slice(0, 10);
   }
 
-  if (origin.options.length <= 1) {
-    try {
-      const res = await fetch(API + "/search/options");
-      if (!res.ok) throw new Error(res.statusText);
-      const data = await res.json();
-      (data.origins || []).forEach((o) => {
-        const opt = document.createElement("option");
-        opt.value = o;
-        opt.textContent = o;
-        origin.appendChild(opt);
-      });
-      (data.destinations || []).forEach((d) => {
-        const opt = document.createElement("option");
-        opt.value = d;
-        opt.textContent = d;
-        dest.appendChild(opt);
-      });
-    } catch (e) {
-      origin.innerHTML = '<option value="">Error loading options</option>';
-    }
+  let stationOptions = null;
+  try {
+    const res = await fetch(API + "/search/options");
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    stationOptions = Array.from(new Set([...(data.origins || []), ...(data.destinations || [])])).sort();
+  } catch (e) {
+    stationOptions = [];
   }
+
+  function attachTypeahead(inputEl, sugEl) {
+    if (!inputEl || !sugEl || !stationOptions) return;
+
+    function renderSuggestions() {
+      const q = inputEl.value.trim().toLowerCase();
+      if (!q) {
+        sugEl.innerHTML = "";
+        sugEl.hidden = true;
+        return;
+      }
+      const matches = stationOptions.filter((name) => name.toLowerCase().includes(q)).slice(0, 10);
+      if (matches.length === 0) {
+        sugEl.innerHTML = "";
+        sugEl.hidden = true;
+        return;
+      }
+      sugEl.innerHTML = matches
+        .map(
+          (name) =>
+            '<button type="button" class="typeahead-option">' + escapeHtml(name) + "</button>"
+        )
+        .join("");
+      sugEl.hidden = false;
+    }
+
+    inputEl.addEventListener("input", renderSuggestions);
+    inputEl.addEventListener("focus", renderSuggestions);
+    inputEl.addEventListener("blur", () => {
+      // Slight delay so click can register
+      setTimeout(() => {
+        sugEl.hidden = true;
+      }, 150);
+    });
+    sugEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".typeahead-option");
+      if (!btn) return;
+      inputEl.value = btn.textContent || "";
+      sugEl.hidden = true;
+      inputEl.focus();
+    });
+  }
+
+  attachTypeahead(originInput, originSug);
+  attachTypeahead(destInput, destSug);
 
   const form = $("search-form");
   form.onsubmit = async (ev) => {
     ev.preventDefault();
     const date = $("search-date").value;
-    const o = $("search-origin").value;
-    const d = $("search-destination").value;
+    const o = originInput.value.trim();
+    const d = destInput.value.trim();
     if (!date || !o || !d) return;
 
     if (submitBtn) {
