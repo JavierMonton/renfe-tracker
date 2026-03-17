@@ -8,7 +8,8 @@ router = APIRouter(prefix="/search", tags=["search"])
 
 # Static options for frontend dropdowns. Must include at least Zaragoza, Calatayud, Tafalla (Phase 1.1).
 # Same list for origins and destinations; backend maps to Renfe codes in renfe_lib when needed.
-ORIGINS = [
+SEARCH_CITIES = [
+    # Original cities
     "Madrid",
     "Barcelona",
     "Valencia",
@@ -18,8 +19,21 @@ ORIGINS = [
     "Zaragoza",
     "Calatayud",
     "Tafalla",
+    # Additional cities from Renfe UI
+    "A CORUÑA",
+    "ALICANTE/ALACANT-TERMINAL",
+    "BARCELONA (TODAS)",
+    "CÓRDOBA-JULIO ANGUITA",
+    "LLEIDA-PIRINEUS",
+    "MÁLAGA MARÍA ZAMBRANO",
+    "MADRID (TODAS)",
+    "OURENSE",
+    "SANTIAGO DE COMPOSTELA-DANIEL CASTELAO",
+    "SEVILLA-SANTA JUSTA",
 ]
-DESTINATIONS = ORIGINS
+
+ORIGINS = SEARCH_CITIES
+DESTINATIONS = SEARCH_CITIES
 
 class SearchBody(BaseModel):
     date: str
