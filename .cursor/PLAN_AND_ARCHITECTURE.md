@@ -122,6 +122,21 @@ Goal: User can run the app in Docker, open the UI, see the home page, use a sear
 
 ---
 
+## 7b. Possible trains (inference from same weekday)
+
+**Requirement (from Requeriments.md):** Show "possible trains" that do not yet appear on Renfe for the requested date but are expected to appear. Renfe publishes more trains for near dates; for far dates (e.g. May 7) only a subset is shown. Trains are consistent by **weekday**: the same Thursday service runs at the same times.
+
+**Rules:**
+- **Weekday matters:** If the user searches for a Friday, infer from other Fridays; for a Thursday, from other Thursdays. The **closer** the reference date to today, the **more accurate** (Renfe shows more trains for near dates).
+- **Train identity:** Same train = same `train_type` + `departure_time` (HH:MM) on the same route. Use this key to merge results and detect "appears on reference date but not on requested date".
+- **Reference dates:** Given requested date and its weekday, choose 1–2 reference dates: same weekday, preferably in the **near future** (e.g. next 1–2 weeks from today). Call `get_train_prices(origin, destination, ref_date)` for each. Union of trains from reference dates = "all trains that typically run on this weekday". Trains in that union that are **not** in the requested-date result = **possible trains** (not yet published for the requested date).
+- **API response:** Each train in the list must have `is_possible: boolean`. If `true`, the train is inferred (not yet published for this date). Optionally include `inferred_from_date` (YYYY-MM-DD) for display. Real (published) trains first, then possible trains; or single list sorted by departure time with visual distinction in the UI.
+- **Performance:** Limit extra Renfe calls (e.g. max 2 reference dates). Consider env flag to disable possible-trains inference (e.g. `RENFE_POSSIBLE_TRAINS=0`).
+
+**Frontend (Results page):** Possible trains: slightly different card style (e.g. muted/secondary color) and a tag or icon: "Possible train – not yet published for this date". "Track this trip" remains available for possible trains.
+
+---
+
 ## 8. Repo layout (suggested)
 
 ```
@@ -156,6 +171,12 @@ Docker expert and backend can agree on exact paths (e.g. `static` vs `frontend/d
 - No crash; SQLite file created in `data/` (or configured volume).
 
 Implementers: start with Phase 1 tasks above. Use this document for any ambiguity; keep changes small and incremental.
+
+---
+
+## 11. Estimated price range for tracked trips
+
+See **`.cursor/ESTIMATED_PRICE_RANGE_PLAN.md`** for the full plan. Summary: persist individual price samples (from search and from scheduler reference-date checks) in a `price_samples` table; show computed min/max range on tracked trip list and detail; scheduler extends to "same weekday, other weeks" and upserts prices. Delegated tasks: **`.cursor/tasks/estimated-price-range-backend.md`** (backend-developer), **`.cursor/tasks/estimated-price-range-frontend.md`** (frontend-web-developer). No breaking changes to existing tracker or scheduler behaviour.
 
 ---
 

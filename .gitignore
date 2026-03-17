@@ -1,0 +1,11 @@
+# Data and DB (mounted in Docker)
+data/
+
+# Renfe GTFS data (downloaded at runtime when using integrated backend)
+renfe_schedule/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo

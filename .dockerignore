@@ -1,0 +1,22 @@
+# Version control and IDE
+.git
+.cursor
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+
+# Data (mounted at runtime, do not bake into image)
+data/
+
+# Uncomment if app/static becomes very large (e.g. large frontend build)
+# app/static
+
+# Optional: local env (compose passes env at runtime)
+.env
+.env.*
