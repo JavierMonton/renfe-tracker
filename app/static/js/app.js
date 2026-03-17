@@ -67,6 +67,11 @@ function renderTripsTable(container, trips) {
     const tr = document.createElement("tr");
     const notYetPublished = t.initial_price == null;
     const currentPrice = getCurrentPriceForTrip(t, t.price_events);
+    const dateParts = [t.date];
+    if (t.departure_time) {
+      dateParts.push(t.departure_time);
+    }
+    const dateLabel = escapeHtml(dateParts.join(" · "));
     let priceHtml;
     if (notYetPublished) {
       priceHtml = '<span class="trip-status trip-status--unpublished">Trip not yet published</span>';
@@ -97,8 +102,8 @@ function renderTripsTable(container, trips) {
     tr.innerHTML =
       "<td>" +
       escapeHtml(t.origin + " → " + t.destination) +
-      "</td><td>" +
-      escapeHtml(t.date) +
+      '</td><td class="trips-table__cell--date">' +
+      dateLabel +
       "</td><td>" +
       escapeHtml(t.train_identifier) +
       "</td><td>" +
@@ -555,6 +560,15 @@ async function loadTripDetail(id) {
 function renderTripDetail(container, trip, events) {
   const notYetPublished = trip.initial_price == null && !(events && events.length > 0);
   const currentPrice = getCurrentPriceForTrip(trip, events);
+  const metaParts = [trip.date];
+  if (trip.departure_time) {
+    metaParts.push(trip.departure_time);
+  }
+  metaParts.push(
+    trip.train_identifier,
+    "Price checked " + formatCheckInterval(trip.check_interval_minutes).replace(/^Every /, "").toLowerCase()
+  );
+  const metaText = metaParts.join(" · ");
 
   const card = document.createElement("div");
   card.className = "trip-detail-card";
@@ -593,11 +607,7 @@ function renderTripDetail(container, trip, events) {
     escapeHtml(trip.origin + " → " + trip.destination) +
     "</h2>" +
     '<div class="trip-meta">' +
-    escapeHtml(trip.date) +
-    " · " +
-    escapeHtml(trip.train_identifier) +
-    " · Price checked " +
-    escapeHtml(formatCheckInterval(trip.check_interval_minutes).replace(/^Every /, "").toLowerCase()) +
+    escapeHtml(metaText) +
     "</div>" +
     '<div class="trip-detail-status-wrap">' +
     statusHtml +

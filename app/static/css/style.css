@@ -114,6 +114,7 @@ main {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   overflow: hidden;
+  margin: 0 auto;
 }
 
 .trips-table {
@@ -126,6 +127,10 @@ main {
   padding: 0.75rem 1rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
+}
+
+.trips-table__cell--date {
+  white-space: normal;
 }
 
 .trips-table th {
