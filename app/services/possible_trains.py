@@ -4,6 +4,7 @@ yet published by Renfe for the requested date. Uses 1–2 reference dates (same
 weekday, near today) and get_train_prices for requested + reference dates.
 """
 import logging
+import os
 from datetime import date, timedelta
 from typing import Any
 
@@ -11,7 +12,26 @@ from app.renfe_lib import get_train_prices
 
 logger = logging.getLogger(__name__)
 
-MAX_REFERENCE_DATES = 2
+
+def _get_max_reference_weeks() -> int:
+    """
+    Number of same-weekday reference weeks to use for price estimation.
+
+    Controlled by RENFE_REFERENCE_WEEKS env var (default: 2).
+    Must be >= 0. If set to 0, only the requested date is used.
+    """
+    raw = os.environ.get("RENFE_REFERENCE_WEEKS", "").strip()
+    if not raw:
+        return 2
+    try:
+        value = int(raw)
+    except ValueError:
+        logger.warning("Invalid RENFE_REFERENCE_WEEKS=%r; falling back to 2", raw)
+        return 2
+    if value < 0:
+        logger.warning("RENFE_REFERENCE_WEEKS=%r is negative; using 0", raw)
+        return 0
+    return value
 
 
 def _train_key(t: dict[str, Any]) -> tuple[str, str]:
@@ -59,13 +79,17 @@ def _price_ranges_by_key(
     return out
 
 
-def _reference_dates(requested_date_str: str, max_dates: int = MAX_REFERENCE_DATES) -> list[str]:
+def _reference_dates(requested_date_str: str, max_dates: int | None = None) -> list[str]:
     """
     Compute up to max_dates reference dates: same weekday as requested_date,
     preferably in [today, requested_date). If the next same-weekday from today
     is the requested date, use the previous 1–2 same-weekday dates instead.
     """
     requested = date.fromisoformat(requested_date_str)
+    if max_dates is None:
+        max_dates = _get_max_reference_weeks()
+    if max_dates <= 0:
+        return []
     today = date.today()
     if requested < today:
         return []

@@ -33,6 +33,19 @@ The compose file mounts `./data` to `/data` and uses `restart: unless-stopped` s
 **Search (Renfe):** The app uses the **integrated Renfe library** (GTFS schedules + live price scraping via DWR). No separate MCP server or browser is required; everything runs inside this project. GTFS data is downloaded automatically on first use into `DATA_DIR/renfe_schedule` (in Docker, `/data/renfe_schedule`).  
 To test search **without** any real Renfe calls, set `RENFE_MOCK=1` (or `RENFE_USE_MOCK=true`): the API returns a fixed list of example trains.
 
+## Configuration
+
+The application behavior can be tuned via environment variables (for Docker, set them in your `.env` or `docker compose` file).
+
+- **`RENFE_REFERENCE_WEEKS`**: number of same-weekday **reference weeks** used to estimate price ranges and infer possible trains.
+  - **Usage**: affects both the **initial search** (when showing estimated price ranges and “possible trains”) and the **scheduler** (when it learns prices for tracked trips on other weeks).
+  - **Default**: `2` (if not set or invalid).
+  - **Allowed values**:
+    - `0` – disable extra weeks (only uses the requested date).
+    - `N >= 1` – use up to `N` same-weekday weeks (e.g. `RENFE_REFERENCE_WEEKS=10`).
+
+More configuration options will be added here as they are introduced.
+
 ## Data persistence
 
 The SQLite database and any app data are stored on the host in **`./data`**, which is mounted into the container at `/data` by `compose.yaml`. The DB file is `./data/renfe_tracker.db`. Renfe GTFS schedule data (used by the integrated backend) is stored in `./data/renfe_schedule` and is also persisted. Data survives container restarts and rebuilds; the service is configured with `restart: unless-stopped` so it will come back up automatically after failures or host reboots.
