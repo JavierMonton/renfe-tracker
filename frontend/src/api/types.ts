@@ -9,6 +9,12 @@ export interface TripListItem {
   departure_time?: TimeHHMM | null
   train_identifier: string
   check_interval_minutes: number
+  // Latest price computed server-side from price_events (fallback handled server-side).
+  // Null means the trip hasn't been published/has no price yet.
+  current_price?: number | null
+  // Direction of the last price change relative to the previous known price.
+  // Null/undefined means unknown or no previous change.
+  last_price_change_direction?: 'up' | 'down' | null
   initial_price?: number | null
   last_checked_at?: string | null
   estimated_price_min?: number | null

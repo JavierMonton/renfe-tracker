@@ -59,6 +59,24 @@ function formatCheckInterval(minutes?: number | null) {
   return `Every ${hours === 1 ? '1 h' : `${hours} h`}`
 }
 
+function PriceDirectionIndicator({ direction }: { direction: 'up' | 'down' }) {
+  const colorClass = direction === 'down' ? 'text-green-700' : 'text-red-700'
+  // Small inline SVG so we avoid non-ASCII arrow glyphs.
+  return (
+    <span aria-hidden="true" className={colorClass}>
+      {direction === 'down' ? (
+        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+          <polygon points="8,12 14,4 2,4" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+          <polygon points="8,4 14,12 2,12" />
+        </svg>
+      )}
+    </span>
+  )
+}
+
 export function HomePage() {
   const [trips, setTrips] = useState<TripListItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -142,9 +160,10 @@ export function HomePage() {
 
               <ul className="divide-y divide-gray-100">
                 {g.trips.map((t) => {
-                  const notPublished = t.initial_price == null
-                  const currentPrice = t.initial_price
+                  const currentPrice = t.current_price ?? null
+                  const notPublished = currentPrice == null
                   const color = priceColor(currentPrice, t.estimated_price_min ?? null, t.estimated_price_max ?? null)
+                  const direction = t.last_price_change_direction ?? null
                   const dateLabel = [t.date, t.departure_time].filter(Boolean).join(' · ')
 
                   const rangeMin = t.estimated_price_min
@@ -189,8 +208,13 @@ export function HomePage() {
                             {notPublished ? (
                               <div className="text-sm italic text-gray-500">Trip not yet published</div>
                             ) : (
-                              <div className="text-lg font-semibold" style={color ? { color } : undefined}>
-                                €{currentPrice != null ? Number(currentPrice).toFixed(2) : '—'}
+                              <div className="flex items-center justify-end gap-2">
+                                <div className="text-lg font-semibold" style={color ? { color } : undefined}>
+                                  €{currentPrice != null ? Number(currentPrice).toFixed(2) : '—'}
+                                </div>
+                                {direction === 'up' || direction === 'down' ? (
+                                  <PriceDirectionIndicator direction={direction} />
+                                ) : null}
                               </div>
                             )}
                           </div>

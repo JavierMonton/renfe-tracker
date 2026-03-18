@@ -135,6 +135,19 @@ async def run_price_check(db_path: str) -> None:
             await db_trips.update_last_checked_at(conn, trip_id, now_str)
         else:
             await db_events.insert_price_event(conn, trip_id, new_price)
+            direction = None
+            if current is not None:
+                # We only reach this branch when the price differs from the previous current price.
+                if new_price < current:
+                    direction = "down"
+                elif new_price > current:
+                    direction = "up"
+            await db_trips.update_last_price_change(
+                conn,
+                trip_id,
+                direction=direction,
+                datetime_str=now_str,
+            )
         await db_trips.update_last_checked_at(conn, trip_id, now_str)
 
         # Also record in global price history for future searches (exact trip date).

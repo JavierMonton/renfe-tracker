@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS trips (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     initial_price REAL,
     last_checked_at TEXT,
-    departure_time TEXT
+    departure_time TEXT,
+    last_price_changed_at TEXT,
+    last_price_change_direction TEXT
 )
 """
 
@@ -57,6 +59,8 @@ TRIPS_ALTER_COLUMNS = [
     ("initial_price", "REAL"),
     ("last_checked_at", "TEXT"),
     ("departure_time", "TEXT"),
+    ("last_price_changed_at", "TEXT"),
+    ("last_price_change_direction", "TEXT"),
 ]
 
 
