@@ -82,8 +82,12 @@ def _price_ranges_by_key(
 def _reference_dates(requested_date_str: str, max_dates: int | None = None) -> list[str]:
     """
     Compute up to max_dates reference dates: same weekday as requested_date,
-    preferably in [today, requested_date). If the next same-weekday from today
-    is the requested date, use the previous 1–2 same-weekday dates instead.
+    preferably in [today, requested_date). If there are not enough dates in that
+    window (e.g. requested is next Friday), fill the remainder with same-weekday
+    dates after requested_date.
+
+    Reference dates are never before today, since past dates are often not useful
+    for live price range estimation.
     """
     requested = date.fromisoformat(requested_date_str)
     if max_dates is None:
@@ -100,17 +104,20 @@ def _reference_dates(requested_date_str: str, max_dates: int | None = None) -> l
     days_ahead = (ref_weekday - today.weekday() + 7) % 7
     first_candidate = today + timedelta(days=days_ahead)
 
-    if first_candidate < requested:
-        # Use same-weekday dates before requested (next 1–2 occurrences from today)
-        d = first_candidate
-        while d < requested and len(ref_dates) < max_dates:
+    # Prefer same-weekday dates in [today, requested_date)
+    d = first_candidate
+    while d < requested and len(ref_dates) < max_dates:
+        if d >= today:
             ref_dates.append(d.isoformat())
-            d += timedelta(days=7)
-    else:
-        # Next same-weekday from today is the requested date; use previous same-weekday dates
-        for k in range(1, max_dates + 1):
-            d = requested - timedelta(days=7 * k)
+        d += timedelta(days=7)
+
+    # If we don't have enough (e.g. requested is next same-weekday),
+    # fill remaining slots with dates after requested_date.
+    d = requested + timedelta(days=7)
+    while len(ref_dates) < max_dates:
+        if d >= today:
             ref_dates.append(d.isoformat())
+        d += timedelta(days=7)
 
     return ref_dates[:max_dates]
 
