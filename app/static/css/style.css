@@ -139,8 +139,20 @@ main {
   color: var(--text);
 }
 
-.trips-table tbody tr:hover {
+.trips-table tbody tr:not(.trips-group-row):hover {
   background: #fafafa;
+}
+
+.trips-group-row td {
+  background: #f7f7fb;
+  font-weight: 600;
+  color: var(--text);
+  padding: 0.6rem 1rem;
+  border-top: 2px solid #e6e6f2;
+}
+
+.trips-group-row + tr td {
+  border-top: 1px solid var(--border);
 }
 
 .trips-table tbody tr:last-child td {

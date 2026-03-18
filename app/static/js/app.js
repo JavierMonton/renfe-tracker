@@ -49,6 +49,34 @@ function getCurrentPriceForTrip(trip, events) {
   return trip.initial_price != null ? trip.initial_price : null;
 }
 
+function compareIsoDate(a, b) {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function compareTimeHHMM(a, b) {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function compareTripsByDeparture(a, b) {
+  const aHasTime = Boolean(a.departure_time);
+  const bHasTime = Boolean(b.departure_time);
+
+  // User preference: trips without a time always go after trips with a time (even if date is earlier).
+  if (aHasTime !== bHasTime) return aHasTime ? -1 : 1;
+
+  const d = compareIsoDate(a.date || "", b.date || "");
+  if (d !== 0) return d;
+
+  if (aHasTime && bHasTime) {
+    return compareTimeHHMM(a.departure_time, b.departure_time);
+  }
+
+  // Stable fallback (no time): keep deterministic ordering
+  return (a.id || 0) - (b.id || 0);
+}
+
 function renderTripsTable(container, trips) {
   if (trips.length === 0) {
     container.innerHTML =
@@ -63,7 +91,23 @@ function renderTripsTable(container, trips) {
     "<thead><tr><th>Route</th><th>Date</th><th>Train</th><th>Check interval</th><th>Price / status</th><th></th></tr></thead><tbody></tbody>";
   const tbody = table.querySelector("tbody");
 
+  const groups = new Map();
   trips.forEach((t) => {
+    const origin = t.origin || "";
+    const destination = t.destination || "";
+    const key = origin + " → " + destination;
+    if (!groups.has(key)) groups.set(key, { origin, destination, trips: [] });
+    groups.get(key).trips.push(t);
+  });
+
+  const groupList = Array.from(groups.values());
+  groupList.forEach((g) => {
+    g.trips.sort(compareTripsByDeparture);
+    g.earliestTrip = g.trips[0] || null;
+  });
+  groupList.sort((a, b) => compareTripsByDeparture(a.earliestTrip || {}, b.earliestTrip || {}));
+
+  function renderTripRow(t) {
     const tr = document.createElement("tr");
     const notYetPublished = t.initial_price == null;
     const currentPrice = getCurrentPriceForTrip(t, t.price_events);
@@ -88,7 +132,12 @@ function renderTripsTable(container, trips) {
     if (hasEstMin || hasEstMax) {
       const fmtPrice = (n) => Number(n).toFixed(2).replace(".", ",");
       if (hasEstMin && hasEstMax) {
-        priceHtml += '<div class="price-range">Precio habitual: ' + fmtPrice(listEstMin) + ' € – ' + fmtPrice(listEstMax) + ' €</div>';
+        priceHtml +=
+          '<div class="price-range">Precio habitual: ' +
+          fmtPrice(listEstMin) +
+          ' € – ' +
+          fmtPrice(listEstMax) +
+          " €</div>";
       } else if (hasEstMin) {
         priceHtml += '<div class="price-range">Precio habitual: desde ' + fmtPrice(listEstMin) + ' €</div>';
       } else {
@@ -115,7 +164,18 @@ function renderTripsTable(container, trips) {
       '">View details</a> <button type="button" class="btn btn-secondary btn--small trip-remove-btn" data-trip-id="' +
       t.id +
       '" aria-label="Remove tracked trip">Remove</button></td>';
-    tbody.appendChild(tr);
+    return tr;
+  }
+
+  groupList.forEach((g) => {
+    const headerTr = document.createElement("tr");
+    headerTr.className = "trips-group-row";
+    headerTr.innerHTML = '<td colspan="6">' + escapeHtml(g.origin + " → " + g.destination) + "</td>";
+    tbody.appendChild(headerTr);
+
+    g.trips.forEach((t) => {
+      tbody.appendChild(renderTripRow(t));
+    });
   });
 
   container.innerHTML = "";
