@@ -55,7 +55,10 @@ app.include_router(trips_router, prefix="/api")
 app.include_router(search_router, prefix="/api")
 
 # Static files last so /api takes precedence
-static_dir = os.path.join(os.path.dirname(__file__), "static")
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+frontend_dist_dir = os.path.join(repo_root, "frontend", "dist")
+legacy_static_dir = os.path.join(os.path.dirname(__file__), "static")
+static_dir = frontend_dist_dir if os.path.isdir(frontend_dist_dir) else legacy_static_dir
 if os.path.isdir(static_dir):
     app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 

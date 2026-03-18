@@ -14,6 +14,10 @@ __pycache__
 # Data (mounted at runtime, do not bake into image)
 data/
 
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+
 # Uncomment if app/static becomes very large (e.g. large frontend build)
 # app/static
 

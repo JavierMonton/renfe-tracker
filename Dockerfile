@@ -1,4 +1,12 @@
-# Renfe Tracker – FastAPI app (Python 3.11, uv). Integrated Renfe library (GTFS + DWR); no browser.
+# Renfe Tracker – FastAPI app (Python 3.11, uv) with a React+Tailwind frontend build.
+
+FROM node:20-slim AS frontend-build
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -13,6 +21,9 @@ COPY pyproject.toml uv.lock README.md ./
 COPY app/ app/
 COPY renfe_mcp/ renfe_mcp/
 RUN uv sync --frozen --no-dev
+
+# Replace static assets with compiled React build
+COPY --from=frontend-build /frontend/dist/ app/static/
 
 # Default run user is 1000:1000; override at runtime with PUID/PGID. No named user needed (entrypoint uses gosu with numeric id).
 RUN chown -R 1000:1000 /app

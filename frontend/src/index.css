@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+@layer base {
+  html,
+  body {
+    @apply min-h-full bg-gray-100 text-gray-900;
+  }
+}
+
