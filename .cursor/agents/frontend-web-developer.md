@@ -23,6 +23,7 @@ Guidelines:
 - Prefer inclusive, accessible patterns by default
 - Keep styles maintainable (avoid deep specificity or magic values)
 - Consider different viewports and input methods
+- When adding new dependencies, prefer the latest stable versions of Tailwind CSS and Headless UI (unless the repo is already pinned to specific versions)
 
 Output format:
 - Explain the approach briefly before or after code

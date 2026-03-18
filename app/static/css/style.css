@@ -144,14 +144,40 @@ main {
 }
 
 .trips-group-row td {
-  background: #f7f7fb;
-  font-weight: 600;
-  color: var(--text);
-  padding: 0.6rem 1rem;
-  border-top: 2px solid #e6e6f2;
+  background: linear-gradient(90deg, #d1205c 0%, #a03078 35%, #6d2d82 65%, #4a2b7f 100%);
+  font-weight: 650;
+  color: #fff;
+  padding: 0.65rem 1rem;
+  border-top: 2px solid rgba(74, 43, 127, 0.35);
+  letter-spacing: 0.1px;
 }
 
-.trips-group-row + tr td {
+/* Group framing: purple outline around each origin→destination block */
+.trips-group-row td,
+.trips-group-item td {
+  border-left: 4px solid rgba(74, 43, 127, 0.55);
+  border-right: 4px solid rgba(74, 43, 127, 0.55);
+}
+
+.trips-group-row td {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.trips-group-item--last td {
+  border-bottom: 2px solid rgba(74, 43, 127, 0.35);
+}
+
+.trips-group-item--last td:first-child {
+  border-bottom-left-radius: 6px;
+}
+
+.trips-group-item--last td:last-child {
+  border-bottom-right-radius: 6px;
+}
+
+/* Ensure the first trip row below the group header doesn't look like a continuous header */
+.trips-group-row + .trips-group-item td {
   border-top: 1px solid var(--border);
 }
 

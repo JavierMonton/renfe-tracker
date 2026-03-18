@@ -77,6 +77,25 @@ function compareTripsByDeparture(a, b) {
   return (a.id || 0) - (b.id || 0);
 }
 
+function clamp01(n) {
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
+
+function priceColorFromRange(current, min, max) {
+  const c = Number(current);
+  const mn = Number(min);
+  const mx = Number(max);
+  if (Number.isNaN(c) || Number.isNaN(mn) || Number.isNaN(mx)) return null;
+  if (mx <= mn) return null;
+
+  const t = clamp01((c - mn) / (mx - mn)); // 0=min (green), 1=max (red)
+  const hue = 120 * (1 - t); // 120=green → 0=red
+  // Slightly muted so it fits the Renfe palette and stays readable.
+  return `hsl(${hue} 55% 32%)`;
+}
+
 function renderTripsTable(container, trips) {
   if (trips.length === 0) {
     container.innerHTML =
@@ -109,6 +128,7 @@ function renderTripsTable(container, trips) {
 
   function renderTripRow(t) {
     const tr = document.createElement("tr");
+    tr.className = "trips-group-item";
     const notYetPublished = t.initial_price == null;
     const currentPrice = getCurrentPriceForTrip(t, t.price_events);
     const dateParts = [t.date];
@@ -120,8 +140,14 @@ function renderTripsTable(container, trips) {
     if (notYetPublished) {
       priceHtml = '<span class="trip-status trip-status--unpublished">Trip not yet published</span>';
     } else {
+      const listEstMin = t.estimated_price_min != null && t.estimated_price_min !== "" ? Number(t.estimated_price_min) : NaN;
+      const listEstMax = t.estimated_price_max != null && t.estimated_price_max !== "" ? Number(t.estimated_price_max) : NaN;
+      const color = priceColorFromRange(currentPrice, listEstMin, listEstMax);
+      const styleAttr = color ? ' style="color: ' + escapeHtml(color) + '"' : "";
       priceHtml =
-        '<span class="trip-price">€' +
+        '<span class="trip-price"' +
+        styleAttr +
+        ">€" +
         (currentPrice != null ? Number(currentPrice).toFixed(2) : "—") +
         "</span>";
     }
@@ -173,8 +199,10 @@ function renderTripsTable(container, trips) {
     headerTr.innerHTML = '<td colspan="6">' + escapeHtml(g.origin + " → " + g.destination) + "</td>";
     tbody.appendChild(headerTr);
 
-    g.trips.forEach((t) => {
-      tbody.appendChild(renderTripRow(t));
+    g.trips.forEach((t, idx) => {
+      const row = renderTripRow(t);
+      if (idx === g.trips.length - 1) row.classList.add("trips-group-item--last");
+      tbody.appendChild(row);
     });
   });
 
