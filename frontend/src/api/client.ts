@@ -5,6 +5,10 @@ import type {
   SearchBody,
   SearchOptionsResponse,
   SearchResponse,
+  CreateNotificationBody,
+  CreateNotificationResponse,
+  ListNotificationsResponse,
+  NotificationListItem,
   TripListItem,
 } from './types'
 
@@ -83,5 +87,21 @@ export async function searchTrains(body: SearchBody): Promise<SearchResponse> {
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+export async function listNotifications(): Promise<NotificationListItem[]> {
+  const data = await apiFetch<ListNotificationsResponse>('/notifications', { method: 'GET' })
+  return Array.isArray(data.notifications) ? data.notifications : []
+}
+
+export async function createNotification(body: CreateNotificationBody): Promise<CreateNotificationResponse> {
+  return await apiFetch<CreateNotificationResponse>('/notifications', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export async function deleteNotification(notificationId: number | string): Promise<void> {
+  await apiFetch<void>(`/notifications/${notificationId}`, { method: 'DELETE' })
 }
 

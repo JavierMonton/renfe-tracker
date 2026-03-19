@@ -1,4 +1,4 @@
-"""SQLite schema: trips, price_events, and price samples."""
+"""SQLite schema: trips, price_events, price samples, and notifications."""
 import logging
 import aiosqlite
 
@@ -54,6 +54,48 @@ CREATE TABLE IF NOT EXISTS price_history (
 )
 """
 
+NOTIFICATIONS_TABLE = """
+CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    label TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+
+    -- Email
+    smtp_host TEXT,
+    smtp_port INTEGER,
+    smtp_username TEXT,
+    smtp_password TEXT,
+    smtp_use_starttls INTEGER,
+    email_to TEXT,
+    email_from TEXT,
+    email_subject TEXT,
+
+    -- Home Assistant
+    ha_url TEXT,
+    ha_token TEXT,
+    ha_notify_service TEXT,
+
+    -- Web Push
+    webpush_vapid_subject TEXT,
+    webpush_vapid_public_key TEXT,
+    webpush_vapid_private_key TEXT
+)
+"""
+
+PUSH_SUBSCRIPTIONS_TABLE = """
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    notification_id INTEGER NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL,
+    keys_auth TEXT NOT NULL,
+    keys_p256dh TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen_at TEXT NOT NULL,
+    UNIQUE(notification_id, endpoint)
+)
+"""
+
 # New columns added after initial schema (for existing DBs without them)
 TRIPS_ALTER_COLUMNS = [
     ("initial_price", "REAL"),
@@ -80,6 +122,8 @@ async def init_db(db_path: str) -> None:
         await conn.execute(PRICE_EVENTS_TABLE)
         await conn.execute(PRICE_SAMPLES_TABLE)
         await conn.execute(PRICE_HISTORY_TABLE)
+        await conn.execute(NOTIFICATIONS_TABLE)
+        await conn.execute(PUSH_SUBSCRIPTIONS_TABLE)
         await conn.commit()
         for col, typ in TRIPS_ALTER_COLUMNS:
             await _add_column_if_missing(conn, "trips", col, typ)

@@ -26,6 +26,7 @@ from app.db.schema import init_db
 from app.db.connection import get_connection, close_connection
 from app.api.trips import router as trips_router
 from app.api.search import router as search_router
+from app.api.notifications import router as notifications_router
 
 app = FastAPI(title="Renfe Tracker")
 
@@ -53,6 +54,7 @@ app.add_middleware(
 # API under /api
 app.include_router(trips_router, prefix="/api")
 app.include_router(search_router, prefix="/api")
+app.include_router(notifications_router, prefix="/api")
 
 # Static files last so /api takes precedence
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

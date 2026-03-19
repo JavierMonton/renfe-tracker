@@ -17,6 +17,7 @@ export interface TripListItem {
   last_price_change_direction?: 'up' | 'down' | null
   initial_price?: number | null
   last_checked_at?: string | null
+  last_price_changed_at?: string | null
   estimated_price_min?: number | null
   estimated_price_max?: number | null
   // Present in some responses; list endpoint currently doesn't include events.
@@ -75,5 +76,74 @@ export interface SearchBody {
 
 export interface SearchResponse {
   trains: TrainResult[]
+}
+
+export type NotificationType = 'email' | 'home_assistant' | 'browser'
+
+export interface NotificationListItemBase {
+  id: number
+  type: NotificationType
+  label?: string | null
+  created_at?: string | null
+}
+
+export interface EmailNotificationListItem extends NotificationListItemBase {
+  type: 'email'
+  email_to?: string | null
+  email_from?: string | null
+  email_subject?: string | null
+  smtp_host?: string | null
+  smtp_port?: number | null
+}
+
+export interface HomeAssistantNotificationListItem extends NotificationListItemBase {
+  type: 'home_assistant'
+  ha_url?: string | null
+  notify_service?: string | null
+}
+
+export interface BrowserNotificationListItem extends NotificationListItemBase {
+  type: 'browser'
+}
+
+export type NotificationListItem = EmailNotificationListItem | HomeAssistantNotificationListItem | BrowserNotificationListItem
+
+export interface ListNotificationsResponse {
+  notifications: NotificationListItem[]
+}
+
+export interface CreateEmailNotificationBody {
+  type: 'email'
+  label?: string | null
+
+  smtp_host: string
+  smtp_port: number
+  smtp_username: string
+  smtp_password: string
+  smtp_use_starttls?: boolean
+
+  email_to: string
+  email_from?: string | null
+  email_subject?: string | null
+}
+
+export interface CreateHomeAssistantNotificationBody {
+  type: 'home_assistant'
+  label?: string | null
+
+  ha_url: string
+  ha_token: string
+  ha_notify_service: string
+}
+
+export interface CreateBrowserNotificationBody {
+  type: 'browser'
+  label?: string | null
+}
+
+export type CreateNotificationBody = CreateEmailNotificationBody | CreateHomeAssistantNotificationBody | CreateBrowserNotificationBody
+
+export interface CreateNotificationResponse {
+  notification_id: number
 }
 

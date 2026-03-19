@@ -209,12 +209,12 @@ export function HomePage() {
                               <div className="text-sm italic text-gray-500">Trip not yet published</div>
                             ) : (
                               <div className="flex items-center justify-end gap-2">
-                                <div className="text-lg font-semibold" style={color ? { color } : undefined}>
-                                  €{currentPrice != null ? Number(currentPrice).toFixed(2) : '—'}
-                                </div>
                                 {direction === 'up' || direction === 'down' ? (
                                   <PriceDirectionIndicator direction={direction} />
                                 ) : null}
+                                <div className="text-lg font-semibold" style={color ? { color } : undefined}>
+                                  €{currentPrice != null ? Number(currentPrice).toFixed(2) : '—'}
+                                </div>
                               </div>
                             )}
                           </div>

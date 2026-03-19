@@ -3,7 +3,8 @@ Periodic job: for each tracked trip that is due, call Renfe for prices,
 update last_checked_at, and insert a price_event only when the price changed.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, date
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from app.db.connection import get_connection
 from app.db import trips as db_trips
@@ -12,11 +13,26 @@ from app.db import price_samples as db_price_samples
 from app.db import price_history as db_price_history
 from app.renfe_lib import get_train_prices
 from app.services.possible_trains import _reference_dates
+from app.services.notifications import dispatch_price_change_notifications
 
 logger = logging.getLogger(__name__)
 
 # SQLite stores datetimes as "YYYY-MM-DD HH:MM:SS" (UTC when using datetime('now'))
 _DATETIME_FMT = "%Y-%m-%d %H:%M:%S"
+
+def _round_price_2(value: object) -> float:
+    """
+    Round prices to 2 decimals using half-up rounding.
+
+    This is meant to align server-side "price changed" semantics with the UI's
+    `toFixed(2)` display.
+    """
+    try:
+        d = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        # Fall back to float conversion if the input isn't a number-like.
+        return float(value)
+    return float(d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
 def _parse_dt(s: str | None) -> datetime | None:
@@ -131,16 +147,30 @@ async def run_price_check(db_path: str) -> None:
 
         events = await db_events.list_by_trip(conn, trip_id)
         current = _get_current_price(trip, events)
-        if current is not None and abs(new_price - current) < 1e-6:
+        new_price_rounded = _round_price_2(price_raw)
+        current_rounded = _round_price_2(current) if current is not None else None
+
+        # Consider it "no change" if the rounded-to-UI value didn't change.
+        if current_rounded is not None and new_price_rounded == current_rounded:
+            # Helpful visibility: raw values might still drift slightly due to float representation.
+            raw_diff = abs(new_price - current) if current is not None else 0.0
+            if raw_diff >= 1e-6:
+                logger.debug(
+                    "Price change suppressed (rounded same): trip_id=%s raw_current=%s raw_new=%s rounded_current=%s rounded_new=%s",
+                    trip_id,
+                    current,
+                    new_price,
+                    current_rounded,
+                    new_price_rounded,
+                )
             await db_trips.update_last_checked_at(conn, trip_id, now_str)
         else:
-            await db_events.insert_price_event(conn, trip_id, new_price)
+            await db_events.insert_price_event(conn, trip_id, new_price_rounded)
             direction = None
-            if current is not None:
-                # We only reach this branch when the price differs from the previous current price.
-                if new_price < current:
+            if current_rounded is not None:
+                if new_price_rounded < current_rounded:
                     direction = "down"
-                elif new_price > current:
+                elif new_price_rounded > current_rounded:
                     direction = "up"
             await db_trips.update_last_price_change(
                 conn,
@@ -148,6 +178,24 @@ async def run_price_check(db_path: str) -> None:
                 direction=direction,
                 datetime_str=now_str,
             )
+            # Best-effort notifications: never alter price-change semantics.
+            try:
+                await dispatch_price_change_notifications(
+                    conn,
+                    trip_id=trip_id,
+                    origin=trip["origin"],
+                    destination=trip["destination"],
+                    departure_time=trip.get("departure_time"),
+                    old_price=current_rounded,
+                    new_price=new_price_rounded,
+                )
+            except Exception as e:
+                logger.warning(
+                    "dispatch_price_change_notifications failed (trip_id=%s): %s",
+                    trip_id,
+                    e,
+                    exc_info=True,
+                )
         await db_trips.update_last_checked_at(conn, trip_id, now_str)
 
         # Also record in global price history for future searches (exact trip date).
