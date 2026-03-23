@@ -8,6 +8,7 @@ import type {
   CreateNotificationBody,
   CreateNotificationResponse,
   ListNotificationsResponse,
+  NotificationConfigStatus,
   NotificationListItem,
   TripListItem,
 } from './types'
@@ -87,6 +88,10 @@ export async function searchTrains(body: SearchBody): Promise<SearchResponse> {
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+export async function getNotificationConfigStatus(): Promise<NotificationConfigStatus> {
+  return await apiFetch<NotificationConfigStatus>('/notifications/config-status', { method: 'GET' })
 }
 
 export async function listNotifications(): Promise<NotificationListItem[]> {

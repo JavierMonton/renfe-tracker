@@ -90,52 +90,43 @@ export interface NotificationListItemBase {
 export interface EmailNotificationListItem extends NotificationListItemBase {
   type: 'email'
   email_to?: string | null
-  email_from?: string | null
   email_subject?: string | null
-  smtp_host?: string | null
-  smtp_port?: number | null
-  smtp_username?: string | null
-  has_smtp_password?: boolean
 }
 
 export interface HomeAssistantNotificationListItem extends NotificationListItemBase {
   type: 'home_assistant'
-  ha_url?: string | null
-  notify_service?: string | null
-  has_ha_token?: boolean
+  ha_notify_service?: string | null
 }
 
 export interface BrowserNotificationListItem extends NotificationListItemBase {
   type: 'browser'
 }
 
-export type NotificationListItem = EmailNotificationListItem | HomeAssistantNotificationListItem | BrowserNotificationListItem
+export type NotificationListItem =
+  | EmailNotificationListItem
+  | HomeAssistantNotificationListItem
+  | BrowserNotificationListItem
 
 export interface ListNotificationsResponse {
   notifications: NotificationListItem[]
 }
 
+// Config status: whether server-side secrets are configured via environment variables
+export interface NotificationConfigStatus {
+  email_configured: boolean
+  ha_configured: boolean
+}
+
 export interface CreateEmailNotificationBody {
   type: 'email'
   label?: string | null
-
-  smtp_host: string
-  smtp_port: number
-  smtp_username: string
-  smtp_password: string
-  smtp_use_starttls?: boolean
-
   email_to: string
-  email_from?: string | null
   email_subject?: string | null
 }
 
 export interface CreateHomeAssistantNotificationBody {
   type: 'home_assistant'
   label?: string | null
-
-  ha_url: string
-  ha_token: string
   ha_notify_service: string
 }
 
@@ -144,9 +135,11 @@ export interface CreateBrowserNotificationBody {
   label?: string | null
 }
 
-export type CreateNotificationBody = CreateEmailNotificationBody | CreateHomeAssistantNotificationBody | CreateBrowserNotificationBody
+export type CreateNotificationBody =
+  | CreateEmailNotificationBody
+  | CreateHomeAssistantNotificationBody
+  | CreateBrowserNotificationBody
 
 export interface CreateNotificationResponse {
   notification_id: number
 }
-

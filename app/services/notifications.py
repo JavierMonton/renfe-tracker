@@ -1,6 +1,8 @@
 """Send notifications (email + Home Assistant) on tracked trip price changes.
 
 Browser notifications are handled client-side by polling while the app is open.
+SMTP and Home Assistant credentials are read from environment variables (app.config),
+not from the database.
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from typing import Optional
 
 import httpx
 
+from app import config
 from app.db import notifications as db_notifications
 
 logger = logging.getLogger("renfe_tracker.notifications")
@@ -89,20 +92,25 @@ async def dispatch_price_change_notifications(
 
 
 async def _send_email_notification(n: dict, summary: str) -> None:
-    smtp_host = n.get("smtp_host")
-    smtp_port = n.get("smtp_port") or 587
+    smtp_host = config.SMTP_HOST
+    smtp_port = config.SMTP_PORT
+    smtp_username = config.SMTP_USERNAME
+    smtp_password = config.SMTP_PASSWORD
+    smtp_use_starttls = config.SMTP_USE_STARTTLS
+    email_from = config.SMTP_FROM
+
     email_to = n.get("email_to")
-    email_from = n.get("email_from") or email_to
-    smtp_username = n.get("smtp_username")
-    smtp_password = n.get("smtp_password")
-    smtp_use_starttls = n.get("smtp_use_starttls")
     subject = n.get("email_subject") or "Renfe Tracker - price changed"
 
-    if not smtp_host or not email_to or not email_from:
-        logger.warning("Email notification missing host/to/from; skipping (id=%s)", n.get("id"))
+    if not smtp_host or not smtp_username or not smtp_password:
+        logger.warning(
+            "Email notification skipped: SMTP_HOST / SMTP_USERNAME / SMTP_PASSWORD not configured "
+            "(notification_id=%s). Set these environment variables to enable email alerts.",
+            n.get("id"),
+        )
         return
-    if smtp_username is None or smtp_password is None:
-        logger.warning("Email notification missing credentials; skipping (id=%s)", n.get("id"))
+    if not email_to:
+        logger.warning("Email notification missing email_to; skipping (id=%s)", n.get("id"))
         return
 
     to_addrs = [a.strip() for a in str(email_to).split(",") if a.strip()]
@@ -112,14 +120,14 @@ async def _send_email_notification(n: dict, summary: str) -> None:
 
     def _send_blocking() -> None:
         msg = EmailMessage()
-        msg["From"] = email_from
+        msg["From"] = email_from or smtp_username
         msg["To"] = ", ".join(to_addrs)
         msg["Subject"] = subject
         msg.set_content(summary)
 
         with smtplib.SMTP(str(smtp_host), int(smtp_port), timeout=10) as smtp:
             smtp.ehlo()
-            if bool(smtp_use_starttls):
+            if smtp_use_starttls:
                 smtp.starttls()
                 smtp.ehlo()
             smtp.login(str(smtp_username), str(smtp_password))
@@ -129,14 +137,20 @@ async def _send_email_notification(n: dict, summary: str) -> None:
 
 
 async def _send_home_assistant_notification(n: dict, summary: str) -> None:
-    ha_url = (n.get("ha_url") or "").rstrip("/")
-    ha_token = n.get("ha_token")
+    ha_url = (config.HA_URL or "").rstrip("/")
+    ha_token = config.HA_TOKEN
     ha_notify_service = n.get("ha_notify_service")
 
-    if not ha_url or not ha_token or not ha_notify_service:
+    if not ha_url or not ha_token:
         logger.warning(
-            "Home Assistant notification missing ha_url/ha_token/ha_notify_service; skipping (id=%s)",
+            "Home Assistant notification skipped: HA_URL / HA_TOKEN not configured "
+            "(notification_id=%s). Set these environment variables to enable HA alerts.",
             n.get("id"),
+        )
+        return
+    if not ha_notify_service:
+        logger.warning(
+            "Home Assistant notification missing ha_notify_service; skipping (id=%s)", n.get("id")
         )
         return
 
@@ -148,4 +162,3 @@ async def _send_home_assistant_notification(n: dict, summary: str) -> None:
         resp = await client.post(url, headers=headers, json=payload)
         if resp.status_code >= 400:
             raise RuntimeError(f"HA notify failed with status={resp.status_code}")
-

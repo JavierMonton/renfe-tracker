@@ -1,0 +1,38 @@
+# Renfe Tracker – example docker-compose with all options documented.
+# Copy to docker-compose.yml and fill in the values you need.
+# Run: docker compose up --build
+# App: http://localhost:8000
+
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"   # override port via .env: PORT=9000
+    environment:
+      DATA_DIR: /data
+      #PUID: ${PUID:-1001}
+      #PGID: ${PGID:-1001}
+
+      # ── Email (SMTP) ────────────────────────────────────────────────────────
+      # Uncomment and fill in to enable email price-change alerts.
+      # The destination address and subject are configured in the UI;
+      # these variables set the SMTP connection that will send the messages.
+      #
+      # SMTP_HOST: smtp.example.com
+      # SMTP_PORT: 587                  # 587 = STARTTLS (default), 465 = SSL, 25 = plain
+      # SMTP_USERNAME: alerts@example.com
+      # SMTP_PASSWORD: your-smtp-password
+      # SMTP_USE_STARTTLS: "true"       # "false" for plain SMTP or SSL-only servers
+      # SMTP_FROM: alerts@example.com   # optional – defaults to SMTP_USERNAME
+
+      # ── Home Assistant ───────────────────────────────────────────────────────
+      # Uncomment and fill in to enable Home Assistant price-change alerts.
+      # The notify service name is configured in the UI;
+      # these variables set the HA instance that will receive the messages.
+      #
+      # HA_URL: http://homeassistant.local:8123
+      # HA_TOKEN: your-long-lived-access-token
+
+    volumes:
+      - ./data:/data   # SQLite database persisted on the host
+    restart: unless-stopped

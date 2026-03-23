@@ -1,4 +1,8 @@
-"""Notification configuration persistence (email + Home Assistant + browser notifications)."""
+"""Notification configuration persistence (email + Home Assistant + browser notifications).
+
+Only user-facing fields are stored in the database.
+SMTP credentials and Home Assistant URL/token are read from environment variables (app.config).
+"""
 
 from __future__ import annotations
 
@@ -17,18 +21,10 @@ async def create_notification(
     *,
     type: str,
     label: Optional[str] = None,
-    # Email
-    smtp_host: Optional[str] = None,
-    smtp_port: Optional[int] = None,
-    smtp_username: Optional[str] = None,
-    smtp_password: Optional[str] = None,
-    smtp_use_starttls: Optional[bool] = None,
+    # Email (user-facing only – no SMTP credentials)
     email_to: Optional[str] = None,
-    email_from: Optional[str] = None,
     email_subject: Optional[str] = None,
-    # Home Assistant
-    ha_url: Optional[str] = None,
-    ha_token: Optional[str] = None,
+    # Home Assistant (user-facing only – no URL or token)
     ha_notify_service: Optional[str] = None,
 ) -> int:
     if type not in NOTIFICATION_TYPES:
@@ -36,49 +32,20 @@ async def create_notification(
 
     cursor = await conn.execute(
         """
-        INSERT INTO notifications (
-            type, label,
-            email_to, email_from, email_subject,
-            smtp_host, smtp_port, smtp_username, smtp_password, smtp_use_starttls,
-            ha_url, ha_token, ha_notify_service,
-            -- Web Push columns are intentionally left NULL in browser-only mode
-            webpush_vapid_subject, webpush_vapid_public_key, webpush_vapid_private_key
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO notifications (type, label, email_to, email_subject, ha_notify_service)
+        VALUES (?, ?, ?, ?, ?)
         """,
-        (
-            type,
-            label,
-            email_to,
-            email_from,
-            email_subject,
-            smtp_host,
-            smtp_port,
-            smtp_username,
-            smtp_password,
-            int(bool(smtp_use_starttls)) if smtp_use_starttls is not None else None,
-            ha_url,
-            ha_token,
-            ha_notify_service,
-            None,
-            None,
-            None,
-        ),
+        (type, label, email_to, email_subject, ha_notify_service),
     )
     await conn.commit()
     return int(cursor.lastrowid)
 
 
 async def list_notifications_public(conn: aiosqlite.Connection) -> list[dict]:
-    """
-    List notifications without exposing secrets (SMTP password, HA token).
-    """
+    """List notifications with only user-facing fields (no secrets)."""
     cursor = await conn.execute(
         """
-        SELECT
-            id, type, label, created_at,
-            email_to, email_from, email_subject,
-            smtp_host, smtp_port, smtp_username, smtp_password,
-            ha_url, ha_token, ha_notify_service
+        SELECT id, type, label, created_at, email_to, email_subject, ha_notify_service
         FROM notifications
         ORDER BY created_at DESC
         """,
@@ -92,18 +59,9 @@ async def list_notifications_public(conn: aiosqlite.Connection) -> list[dict]:
                 "type": r["type"],
                 "label": r["label"],
                 "created_at": r["created_at"],
-                # Email (sanitized)
                 "email_to": r["email_to"],
-                "email_from": r["email_from"],
                 "email_subject": r["email_subject"],
-                "smtp_host": r["smtp_host"],
-                "smtp_port": r["smtp_port"],
-                "smtp_username": "******" if r["smtp_username"] else None,
-                "has_smtp_password": bool(r["smtp_password"]),
-                # HA (sanitized)
-                "ha_url": r["ha_url"],
-                "notify_service": r["ha_notify_service"],
-                "has_ha_token": bool(r["ha_token"]),
+                "ha_notify_service": r["ha_notify_service"],
             }
         )
     return out
@@ -111,16 +69,12 @@ async def list_notifications_public(conn: aiosqlite.Connection) -> list[dict]:
 
 async def list_notifications_for_dispatch(conn: aiosqlite.Connection) -> list[dict]:
     """
-    Internal: list email + Home Assistant notifications including secrets needed for delivery.
-    Browser notifications are handled client-side by polling.
+    Internal: list email + Home Assistant notifications for dispatch.
+    Only user-facing fields are returned; credentials come from app.config.
     """
     cursor = await conn.execute(
         """
-        SELECT
-            id, type, label, created_at,
-            email_to, email_from, email_subject,
-            smtp_host, smtp_port, smtp_username, smtp_password, smtp_use_starttls,
-            ha_url, ha_token, ha_notify_service
+        SELECT id, type, label, email_to, email_subject, ha_notify_service
         FROM notifications
         WHERE type IN ('email', 'home_assistant')
         ORDER BY created_at DESC
@@ -134,19 +88,8 @@ async def list_notifications_for_dispatch(conn: aiosqlite.Connection) -> list[di
                 "id": r["id"],
                 "type": r["type"],
                 "label": r["label"],
-                "created_at": r["created_at"],
-                # Email (including password)
                 "email_to": r["email_to"],
-                "email_from": r["email_from"],
                 "email_subject": r["email_subject"],
-                "smtp_host": r["smtp_host"],
-                "smtp_port": r["smtp_port"],
-                "smtp_username": r["smtp_username"],
-                "smtp_password": r["smtp_password"],
-                "smtp_use_starttls": bool(r["smtp_use_starttls"]) if r["smtp_use_starttls"] is not None else True,
-                # HA (including token)
-                "ha_url": r["ha_url"],
-                "ha_token": r["ha_token"],
                 "ha_notify_service": r["ha_notify_service"],
             }
         )
@@ -157,4 +100,3 @@ async def delete_notification(conn: aiosqlite.Connection, notification_id: int) 
     cursor = await conn.execute("DELETE FROM notifications WHERE id = ?", (notification_id,))
     await conn.commit()
     return bool(cursor.rowcount)
-
