@@ -1,6 +1,23 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+
+function PriceDirectionIndicator({ direction }: { direction: 'up' | 'down' }) {
+  const colorClass = direction === 'down' ? 'text-green-700' : 'text-red-700'
+  return (
+    <span aria-hidden="true" className={colorClass}>
+      {direction === 'down' ? (
+        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+          <polygon points="8,12 14,4 2,4" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+          <polygon points="8,4 14,12 2,12" />
+        </svg>
+      )}
+    </span>
+  )
+}
 import { deleteTrip, getTrip } from '../api/client'
 import type { PriceEvent, TripListItem } from '../api/types'
 
@@ -80,6 +97,23 @@ export function TripDetailPage() {
   }, [tripId])
 
   const currentPrice = useMemo(() => (trip ? getCurrentPrice(trip, events) : null), [trip, events])
+
+  const eventDirections = useMemo(() => {
+    const sorted = [...events].sort((a, b) => a.detected_at.localeCompare(b.detected_at))
+    const map = new Map<number, 'up' | 'down' | null>()
+    for (let i = 0; i < sorted.length; i++) {
+      const prev = sorted[i - 1]
+      const curr = sorted[i]
+      if (!prev || curr.price_detected == null || prev.price_detected == null) {
+        map.set(curr.id, null)
+      } else {
+        const c = Number(curr.price_detected)
+        const p = Number(prev.price_detected)
+        map.set(curr.id, c < p ? 'down' : c > p ? 'up' : null)
+      }
+    }
+    return map
+  }, [events])
 
   if (loading) {
     return <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5 text-sm text-gray-600">Loading trip…</div>
@@ -166,12 +200,18 @@ export function TripDetailPage() {
           <p className="mt-3 text-sm text-gray-600">{notPublished ? 'No price changes yet. Trip not yet published.' : 'No price changes yet.'}</p>
         ) : (
           <ul className="mt-3 divide-y divide-gray-100">
-            {events.map((ev) => (
-              <li key={ev.id} className="flex items-center justify-between gap-4 py-3">
-                <div className="text-sm font-semibold text-renfe-purple">€{ev.price_detected != null ? Number(ev.price_detected).toFixed(2) : '—'}</div>
-                <div className="text-sm text-gray-600">{formatDetectedAt(ev.detected_at)}</div>
-              </li>
-            ))}
+            {events.map((ev) => {
+              const direction = eventDirections.get(ev.id) ?? null
+              return (
+                <li key={ev.id} className="flex items-center justify-between gap-4 py-3">
+                  <div className="flex items-center gap-2">
+                    {direction ? <PriceDirectionIndicator direction={direction} /> : <div className="h-4 w-4" />}
+                    <div className="text-sm font-semibold text-renfe-purple">€{ev.price_detected != null ? Number(ev.price_detected).toFixed(2) : '—'}</div>
+                  </div>
+                  <div className="text-sm text-gray-600">{formatDetectedAt(ev.detected_at)}</div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

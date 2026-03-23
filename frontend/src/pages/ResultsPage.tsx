@@ -76,11 +76,13 @@ export function ResultsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-        <h2 className="text-base font-semibold text-gray-900">Results</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          {store.origin} → {store.destination} · {store.date}
-        </p>
+      <div className="overflow-hidden rounded-xl shadow-sm ring-1 ring-renfe-purple/20">
+        <div className="bg-renfeHeader px-4 py-3 text-white">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold">{store.origin} → {store.destination}</h2>
+            <span className="text-xs text-white/85">{store.date}</span>
+          </div>
+        </div>
       </div>
 
       {trains.length === 0 ? (
@@ -92,7 +94,6 @@ export function ResultsPage() {
           {trains.map((t, idx) => {
             const duration = formatDuration(t.duration_minutes)
             const depTime = t.departure_time ? String(t.departure_time) : ''
-            const metaParts = [depTime, duration].filter(Boolean)
 
             const fmt = (n: number) => Number(n).toFixed(2).replace('.', ',')
             const hasMin = typeof t.estimated_price_min === 'number'
@@ -101,39 +102,43 @@ export function ResultsPage() {
             return (
               <li
                 key={`${t.name}-${idx}-${depTime}`}
-                className={`rounded-xl border bg-white p-4 shadow-sm ${
-                  t.is_possible ? 'border-dashed border-gray-300 bg-gray-50' : 'border-gray-200'
+                className={`rounded-xl border p-4 shadow-sm ${
+                  t.is_possible ? 'border-dashed border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'
                 }`}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <div className="text-sm font-semibold text-gray-900">{t.name || 'Train'}</div>
-                      {metaParts.length > 0 && <div className="text-sm text-gray-600">{metaParts.join(' · ')}</div>}
+                      {(depTime || duration) && (
+                        <div className="text-sm text-gray-600">
+                          {[depTime ? `Salida: ${depTime}` : null, duration ? `Duración: ${duration}` : null]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      )}
                     </div>
 
                     {(hasMin || hasMax) && (
-                      <div className="mt-1 text-xs text-gray-600">
+                      <div className="mt-1.5 text-sm text-gray-600">
+                        <span className="font-medium text-gray-700">Precio habitual: </span>
                         {hasMin && hasMax ? (
                           <>
-                            <span className="font-medium text-gray-700">Precio habitual:</span> {fmt(t.estimated_price_min!)} € –{' '}
-                            {fmt(t.estimated_price_max!)} €
+                            <span className="font-semibold text-green-700">{fmt(t.estimated_price_min!)} €</span>
+                            {' – '}
+                            <span className="font-semibold text-red-700">{fmt(t.estimated_price_max!)} €</span>
                           </>
                         ) : hasMin ? (
-                          <>
-                            <span className="font-medium text-gray-700">Precio habitual:</span> desde {fmt(t.estimated_price_min!)} €
-                          </>
+                          <>desde <span className="font-semibold text-green-700">{fmt(t.estimated_price_min!)} €</span></>
                         ) : (
-                          <>
-                            <span className="font-medium text-gray-700">Precio habitual:</span> hasta {fmt(t.estimated_price_max!)} €
-                          </>
+                          <>hasta <span className="font-semibold text-red-700">{fmt(t.estimated_price_max!)} €</span></>
                         )}
                       </div>
                     )}
 
                     {t.is_possible && (
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700">
+                        <span className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700">
                           Tren posible – aún no publicado para esta fecha
                         </span>
                         {t.inferred_from_date && (

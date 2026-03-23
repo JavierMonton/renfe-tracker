@@ -4,6 +4,16 @@ import { Link } from 'react-router-dom'
 import { deleteTrip, listTrips } from '../api/client'
 import type { TripListItem } from '../api/types'
 
+function isTripPast(trip: TripListItem): boolean {
+  if (!trip.date) return false
+  try {
+    const dateStr = trip.departure_time ? `${trip.date}T${trip.departure_time}` : trip.date
+    return new Date(dateStr) < new Date()
+  } catch {
+    return false
+  }
+}
+
 function compareIso(a: string, b: string) {
   if (a === b) return 0
   return a < b ? -1 : 1
@@ -172,8 +182,10 @@ export function HomePage() {
                   const hasMax = typeof rangeMax === 'number' && Number.isFinite(rangeMax)
                   const fmt = (n: number) => n.toFixed(2).replace('.', ',')
 
+                  const isPast = isTripPast(t)
+
                   return (
-                    <li key={t.id} className="px-4 py-4">
+                    <li key={t.id} className={`px-4 py-4 ${isPast ? 'bg-red-50' : ''}`}>
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

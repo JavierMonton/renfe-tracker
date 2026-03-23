@@ -50,6 +50,24 @@ def _parse_dt(s: str | None) -> datetime | None:
             return None
 
 
+def _is_past_trip(trip: dict, now: datetime) -> bool:
+    """Return True if the trip's departure date/time has already passed."""
+    trip_date = trip.get("date")
+    if not trip_date:
+        return False
+    departure_time = trip.get("departure_time")
+    if departure_time:
+        try:
+            trip_dt = datetime.fromisoformat(f"{trip_date}T{departure_time}")
+            return trip_dt < now
+        except ValueError:
+            pass
+    try:
+        return datetime.strptime(trip_date, "%Y-%m-%d").date() < now.date()
+    except ValueError:
+        return False
+
+
 def _is_due(trip: dict, now: datetime) -> bool:
     ref_str = trip.get("last_checked_at") or trip.get("created_at")
     ref_dt = _parse_dt(ref_str)
@@ -101,6 +119,9 @@ async def run_price_check(db_path: str) -> None:
 
     for trip in all_trips:
         if not _is_due(trip, now):
+            continue
+        if _is_past_trip(trip, now):
+            logger.debug("Skipping past trip %s (%s %s)", trip["id"], trip["date"], trip.get("departure_time", ""))
             continue
         trip_id = trip["id"]
         logger.info(
