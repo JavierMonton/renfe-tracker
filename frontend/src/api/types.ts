@@ -94,12 +94,15 @@ export interface EmailNotificationListItem extends NotificationListItemBase {
   email_subject?: string | null
   smtp_host?: string | null
   smtp_port?: number | null
+  smtp_username?: string | null
+  has_smtp_password?: boolean
 }
 
 export interface HomeAssistantNotificationListItem extends NotificationListItemBase {
   type: 'home_assistant'
   ha_url?: string | null
   notify_service?: string | null
+  has_ha_token?: boolean
 }
 
 export interface BrowserNotificationListItem extends NotificationListItemBase {

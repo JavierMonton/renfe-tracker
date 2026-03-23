@@ -105,9 +105,17 @@ TRIPS_ALTER_COLUMNS = [
     ("last_price_change_direction", "TEXT"),
 ]
 
+NOTIFICATIONS_ALTER_COLUMNS = [
+    ("smtp_use_starttls", "INTEGER"),
+    ("ha_notify_service", "TEXT"),
+    ("webpush_vapid_subject", "TEXT"),
+    ("webpush_vapid_public_key", "TEXT"),
+    ("webpush_vapid_private_key", "TEXT"),
+]
+
 
 async def _add_column_if_missing(conn: aiosqlite.Connection, table: str, column: str, col_type: str) -> None:
-    cursor = await conn.execute("PRAGMA table_info(trips)" if table == "trips" else "PRAGMA table_info(price_events)")
+    cursor = await conn.execute(f"PRAGMA table_info({table})")
     rows = await cursor.fetchall()
     names = [r[1] for r in rows]
     if column in names:
@@ -127,4 +135,6 @@ async def init_db(db_path: str) -> None:
         await conn.commit()
         for col, typ in TRIPS_ALTER_COLUMNS:
             await _add_column_if_missing(conn, "trips", col, typ)
+        for col, typ in NOTIFICATIONS_ALTER_COLUMNS:
+            await _add_column_if_missing(conn, "notifications", col, typ)
         await conn.commit()
