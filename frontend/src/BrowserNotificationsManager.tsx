@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { getTrip, listNotifications, listTrips } from './api/client'
 import type { NotificationListItem, PriceEvent, TripListItem } from './api/types'
 
@@ -8,12 +10,19 @@ function formatPrice(p: number | null | undefined): string {
   return p.toFixed(2)
 }
 
-function buildPriceChangeSummary(trip: TripListItem, oldPrice: number | null, newPrice: number | null, departureTime?: string | null) {
-  const dep = departureTime ? departureTime : 'N/A'
-  return `Trip - ${trip.origin} -> ${trip.destination}, ${dep}, changed price from ${formatPrice(oldPrice)} to ${formatPrice(newPrice)}`
+function buildPriceChangeSummary(t: TFunction, trip: TripListItem, oldPrice: number | null, newPrice: number | null, departureTime?: string | null) {
+  const dep = departureTime ?? 'N/A'
+  return t('browserNotif.body', {
+    origin: trip.origin,
+    destination: trip.destination,
+    departure: dep,
+    oldPrice: formatPrice(oldPrice),
+    newPrice: formatPrice(newPrice),
+  })
 }
 
 export function BrowserNotificationsManager() {
+  const { t } = useTranslation()
   const [browserEnabled, setBrowserEnabled] = useState(false)
 
   // tripId -> last_price_changed_at we have already handled
@@ -35,8 +44,8 @@ export function BrowserNotificationsManager() {
         const trips = await listTrips()
         if (cancelled) return
         const nextSeen: Record<number, string | null> = {}
-        for (const t of trips) {
-          nextSeen[t.id] = t.last_price_changed_at ?? null
+        for (const tr of trips) {
+          nextSeen[tr.id] = tr.last_price_changed_at ?? null
         }
         seenRef.current = nextSeen
       } catch {
@@ -58,17 +67,17 @@ export function BrowserNotificationsManager() {
 
       try {
         const trips = await listTrips()
-        for (const t of trips) {
-          const currentChangedAt = t.last_price_changed_at ?? null
-          const prevChangedAt = seenRef.current[t.id] ?? null
+        for (const tr of trips) {
+          const currentChangedAt = tr.last_price_changed_at ?? null
+          const prevChangedAt = seenRef.current[tr.id] ?? null
 
           if (!currentChangedAt) continue
           if (prevChangedAt === currentChangedAt) continue
 
           // Update immediately to avoid duplicate notifications if getTrip is slow.
-          seenRef.current[t.id] = currentChangedAt
+          seenRef.current[tr.id] = currentChangedAt
 
-          const res = await getTrip(t.id)
+          const res = await getTrip(tr.id)
           const trip = res.trip
           const events: PriceEvent[] = Array.isArray(res.price_events) ? (res.price_events as PriceEvent[]) : []
 
@@ -76,6 +85,7 @@ export function BrowserNotificationsManager() {
           const oldPrice = typeof events[1]?.price_detected === 'number' ? (events[1].price_detected as number) : null
 
           const summary = buildPriceChangeSummary(
+            t,
             trip,
             oldPrice,
             newPrice,
@@ -84,7 +94,7 @@ export function BrowserNotificationsManager() {
 
           if (Notification.permission === 'granted') {
             // eslint-disable-next-line no-new
-            new Notification('Renfe Tracker', { body: summary })
+            new Notification(t('browserNotif.title'), { body: summary })
           }
         }
       } catch {

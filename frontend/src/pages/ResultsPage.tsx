@@ -1,6 +1,7 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { createTrip } from '../api/client'
 import type { TrainResult } from '../api/types'
 
@@ -10,17 +11,6 @@ type SearchStore = {
   destination: string
   trains: TrainResult[]
 }
-
-const TRACK_INTERVAL_OPTIONS = [
-  { value: 1, label: 'Every 1 minute' },
-  { value: 5, label: 'Every 5 minutes' },
-  { value: 10, label: 'Every 10 minutes' },
-  { value: 30, label: 'Every 30 minutes' },
-  { value: 60, label: 'Every 1 hour' },
-  { value: 120, label: 'Every 2 hours' },
-  { value: 360, label: 'Every 6 hours' },
-  { value: 720, label: 'Every 12 hours' },
-]
 
 function formatDuration(minutes?: number | null) {
   if (!minutes || minutes <= 0) return ''
@@ -43,9 +33,21 @@ function formatInferredDate(yyyyMmDd?: string | null) {
 
 export function ResultsPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [pending, setPending] = useState<{ train: TrainResult; interval: number } | null>(null)
   const [tracking, setTracking] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const trackIntervalOptions = useMemo(() => [
+    { value: 1, label: t('common.checkEveryMin', { n: 1 }) },
+    { value: 5, label: t('common.checkEveryMin', { n: 5 }) },
+    { value: 10, label: t('common.checkEveryMin', { n: 10 }) },
+    { value: 30, label: t('common.checkEveryMin', { n: 30 }) },
+    { value: 60, label: t('common.checkEveryHour', { n: 1 }) },
+    { value: 120, label: t('common.checkEveryHour', { n: 2 }) },
+    { value: 360, label: t('common.checkEveryHour', { n: 6 }) },
+    { value: 720, label: t('common.checkEveryHour', { n: 12 }) },
+  ], [t])
 
   const store = useMemo(() => {
     const raw = sessionStorage.getItem('renfe_search')
@@ -60,13 +62,13 @@ export function ResultsPage() {
   if (!store) {
     return (
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-        <p className="text-sm text-gray-700">No search results. Go back to search and try again.</p>
+        <p className="text-sm text-gray-700">{t('results.noResults')}</p>
         <button
           type="button"
           onClick={() => navigate('/search')}
           className="mt-4 rounded-md bg-renfe-red px-3 py-2 text-sm font-semibold text-white hover:bg-renfe-redHover"
         >
-          Back to search
+          {t('results.backToSearch')}
         </button>
       </div>
     )
@@ -87,32 +89,32 @@ export function ResultsPage() {
 
       {trains.length === 0 ? (
         <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-          <p className="text-sm text-gray-700">No trains found for this search.</p>
+          <p className="text-sm text-gray-700">{t('results.noTrains')}</p>
         </div>
       ) : (
         <ul className="space-y-3">
-          {trains.map((t, idx) => {
-            const duration = formatDuration(t.duration_minutes)
-            const depTime = t.departure_time ? String(t.departure_time) : ''
+          {trains.map((tr, idx) => {
+            const duration = formatDuration(tr.duration_minutes)
+            const depTime = tr.departure_time ? String(tr.departure_time) : ''
 
             const fmt = (n: number) => Number(n).toFixed(2).replace('.', ',')
-            const hasMin = typeof t.estimated_price_min === 'number'
-            const hasMax = typeof t.estimated_price_max === 'number'
+            const hasMin = typeof tr.estimated_price_min === 'number'
+            const hasMax = typeof tr.estimated_price_max === 'number'
 
             return (
               <li
-                key={`${t.name}-${idx}-${depTime}`}
+                key={`${tr.name}-${idx}-${depTime}`}
                 className={`rounded-xl border p-4 shadow-sm ${
-                  t.is_possible ? 'border-dashed border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'
+                  tr.is_possible ? 'border-dashed border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'
                 }`}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <div className="text-sm font-semibold text-gray-900">{t.name || 'Train'}</div>
+                      <div className="text-sm font-semibold text-gray-900">{tr.name || 'Train'}</div>
                       {(depTime || duration) && (
                         <div className="text-sm text-gray-600">
-                          {[depTime ? `Salida: ${depTime}` : null, duration ? `Duración: ${duration}` : null]
+                          {[depTime ? `${t('results.departure')} ${depTime}` : null, duration ? `${t('results.duration')} ${duration}` : null]
                             .filter(Boolean)
                             .join(' · ')}
                         </div>
@@ -121,28 +123,28 @@ export function ResultsPage() {
 
                     {(hasMin || hasMax) && (
                       <div className="mt-1.5 text-sm text-gray-600">
-                        <span className="font-medium text-gray-700">Precio habitual: </span>
+                        <span className="font-medium text-gray-700">{t('common.estimatedPrice')} </span>
                         {hasMin && hasMax ? (
                           <>
-                            <span className="font-semibold text-green-700">{fmt(t.estimated_price_min!)} €</span>
+                            <span className="font-semibold text-green-700">{fmt(tr.estimated_price_min!)} €</span>
                             {' – '}
-                            <span className="font-semibold text-red-700">{fmt(t.estimated_price_max!)} €</span>
+                            <span className="font-semibold text-red-700">{fmt(tr.estimated_price_max!)} €</span>
                           </>
                         ) : hasMin ? (
-                          <>desde <span className="font-semibold text-green-700">{fmt(t.estimated_price_min!)} €</span></>
+                          <>{t('common.from')} <span className="font-semibold text-green-700">{fmt(tr.estimated_price_min!)} €</span></>
                         ) : (
-                          <>hasta <span className="font-semibold text-red-700">{fmt(t.estimated_price_max!)} €</span></>
+                          <>{t('common.upTo')} <span className="font-semibold text-red-700">{fmt(tr.estimated_price_max!)} €</span></>
                         )}
                       </div>
                     )}
 
-                    {t.is_possible && (
+                    {tr.is_possible && (
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         <span className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700">
-                          Tren posible – aún no publicado para esta fecha
+                          {t('results.possibleTrain')}
                         </span>
-                        {t.inferred_from_date && (
-                          <span className="text-xs text-gray-500">Inferido desde {formatInferredDate(t.inferred_from_date)}</span>
+                        {tr.inferred_from_date && (
+                          <span className="text-xs text-gray-500">{t('results.inferredFrom', { date: formatInferredDate(tr.inferred_from_date) })}</span>
                         )}
                       </div>
                     )}
@@ -151,15 +153,15 @@ export function ResultsPage() {
                   <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
                     <div className="text-right">
                       <div className="text-lg font-semibold text-renfe-purple">
-                        €{t.price != null ? Number(t.price).toFixed(2) : '—'}
+                        €{tr.price != null ? Number(tr.price).toFixed(2) : '—'}
                       </div>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setPending({ train: t, interval: 60 })}
+                      onClick={() => setPending({ train: tr, interval: 60 })}
                       className="inline-flex items-center justify-center rounded-md bg-renfe-red px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-renfe-redHover focus:outline-none focus:ring-2 focus:ring-renfe-purple focus:ring-offset-2"
                     >
-                      Track this trip
+                      {t('results.trackTrip')}
                     </button>
                   </div>
                 </div>
@@ -173,14 +175,14 @@ export function ResultsPage() {
         <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl ring-1 ring-black/5">
-            <DialogTitle className="text-base font-semibold text-gray-900">How often to track?</DialogTitle>
-            <p className="mt-2 text-sm text-gray-600">We will check the price at this interval.</p>
+            <DialogTitle className="text-base font-semibold text-gray-900">{t('results.dialogTitle')}</DialogTitle>
+            <p className="mt-2 text-sm text-gray-600">{t('results.intervalPrompt')}</p>
 
             {error && <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{error}</div>}
 
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-900" htmlFor="track-interval">
-                Check interval
+                {t('results.checkInterval')}
               </label>
               <select
                 id="track-interval"
@@ -188,7 +190,7 @@ export function ResultsPage() {
                 onChange={(e) => setPending((p) => (p ? { ...p, interval: parseInt(e.target.value, 10) } : p))}
                 className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-renfe-purple focus:outline-none focus:ring-2 focus:ring-renfe-purple/30"
               >
-                {TRACK_INTERVAL_OPTIONS.map((o) => (
+                {trackIntervalOptions.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -203,7 +205,7 @@ export function ResultsPage() {
                 onClick={() => setPending(null)}
                 className="rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -235,14 +237,14 @@ export function ResultsPage() {
                     setPending(null)
                     navigate('/')
                   } catch (e) {
-                    setError(e instanceof Error ? e.message : 'Could not track trip')
+                    setError(e instanceof Error ? e.message : t('results.errorCouldNotTrack'))
                   } finally {
                     setTracking(false)
                   }
                 }}
                 className="rounded-md bg-renfe-red px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-renfe-redHover disabled:opacity-60"
               >
-                Track
+                {t('results.track')}
               </button>
             </div>
           </DialogPanel>
@@ -251,4 +253,3 @@ export function ResultsPage() {
     </div>
   )
 }
-

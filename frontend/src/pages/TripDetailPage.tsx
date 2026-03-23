@@ -1,6 +1,8 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 
 function PriceDirectionIndicator({ direction }: { direction: 'up' | 'down' }) {
   const colorClass = direction === 'down' ? 'text-green-700' : 'text-red-700'
@@ -29,8 +31,8 @@ function getCurrentPrice(trip: TripListItem, events: PriceEvent[]) {
   return trip.initial_price ?? null
 }
 
-function formatLastCheckedAt(iso?: string | null) {
-  if (!iso) return 'Not checked yet'
+function formatLastCheckedAt(t: TFunction, iso?: string | null) {
+  if (!iso) return t('common.notCheckedYet')
   try {
     const d = new Date(iso)
     return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
@@ -49,16 +51,17 @@ function formatDetectedAt(iso?: string | null) {
   }
 }
 
-function formatCheckInterval(minutes?: number | null) {
+function formatShortInterval(t: TFunction, minutes?: number | null): string {
   if (!minutes || minutes <= 0) return '—'
-  if (minutes < 60) return `Every ${minutes} min`
+  if (minutes < 60) return t('common.shortMin', { n: minutes })
   const hours = minutes / 60
-  return `Every ${hours === 1 ? '1 h' : `${hours} h`}`
+  return t('common.shortHour', { n: hours })
 }
 
 export function TripDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const tripId = id ? parseInt(id, 10) : NaN
 
   const [trip, setTrip] = useState<TripListItem | null>(null)
@@ -71,7 +74,7 @@ export function TripDetailPage() {
   useEffect(() => {
     if (!Number.isFinite(tripId)) {
       setLoading(false)
-      setError('Trip not found')
+      setError(t('tripDetail.notFound'))
       return
     }
     let mounted = true
@@ -85,7 +88,7 @@ export function TripDetailPage() {
         setEvents(Array.isArray(res.price_events) ? res.price_events : [])
       } catch (e) {
         if (!mounted) return
-        setError(e instanceof Error ? e.message : 'Error loading trip')
+        setError(e instanceof Error ? e.message : t('tripDetail.loading'))
       } finally {
         if (!mounted) return
         setLoading(false)
@@ -116,16 +119,16 @@ export function TripDetailPage() {
   }, [events])
 
   if (loading) {
-    return <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5 text-sm text-gray-600">Loading trip…</div>
+    return <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5 text-sm text-gray-600">{t('tripDetail.loading')}</div>
   }
 
   if (error || !trip) {
     return (
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-        <p className="text-sm text-red-700">{error ?? 'Trip not found'}</p>
+        <p className="text-sm text-red-700">{error ?? t('tripDetail.notFound')}</p>
         <div className="mt-4">
           <Link to="/" className="text-sm font-medium text-renfe-red hover:text-renfe-redHover">
-            ← Back to trips
+            {t('tripDetail.backToTrips')}
           </Link>
         </div>
       </div>
@@ -137,7 +140,7 @@ export function TripDetailPage() {
     trip.date,
     trip.departure_time ? String(trip.departure_time) : null,
     trip.train_identifier,
-    `Price checked ${formatCheckInterval(trip.check_interval_minutes).replace(/^Every /, '').toLowerCase()}`,
+    t('tripDetail.priceChecked', { interval: formatShortInterval(t, trip.check_interval_minutes) }),
   ]
     .filter(Boolean)
     .join(' · ')
@@ -161,43 +164,43 @@ export function TripDetailPage() {
             onClick={() => setRemoveOpen(true)}
             className="rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-renfe-purple focus:ring-offset-2"
           >
-            Remove trip
+            {t('tripDetail.removeTrip')}
           </button>
         </div>
 
         <div className="mt-4 rounded-lg bg-gray-50 p-4 ring-1 ring-gray-100">
           {notPublished ? (
-            <div className="text-sm italic text-gray-500">Trip not yet published</div>
+            <div className="text-sm italic text-gray-500">{t('tripDetail.notPublished')}</div>
           ) : (
             <div className="text-lg font-semibold text-renfe-purple">
-              Current price: €{currentPrice != null ? Number(currentPrice).toFixed(2) : '—'}
+              {t('tripDetail.currentPrice', { price: currentPrice != null ? Number(currentPrice).toFixed(2) : '—' })}
             </div>
           )}
           {(hasMin || hasMax) && (
             <div className="mt-1 text-sm text-gray-600">
               {hasMin && hasMax ? (
                 <>
-                  <span className="font-medium text-gray-700">Precio habitual:</span> {fmt(trip.estimated_price_min!)} € – {fmt(trip.estimated_price_max!)} €
+                  <span className="font-medium text-gray-700">{t('common.estimatedPrice')}</span> {fmt(trip.estimated_price_min!)} € – {fmt(trip.estimated_price_max!)} €
                 </>
               ) : hasMin ? (
                 <>
-                  <span className="font-medium text-gray-700">Precio habitual:</span> desde {fmt(trip.estimated_price_min!)} €
+                  <span className="font-medium text-gray-700">{t('common.estimatedPrice')}</span> {t('common.from')} {fmt(trip.estimated_price_min!)} €
                 </>
               ) : (
                 <>
-                  <span className="font-medium text-gray-700">Precio habitual:</span> hasta {fmt(trip.estimated_price_max!)} €
+                  <span className="font-medium text-gray-700">{t('common.estimatedPrice')}</span> {t('common.upTo')} {fmt(trip.estimated_price_max!)} €
                 </>
               )}
             </div>
           )}
-          <div className="mt-1 text-sm text-gray-600">Last checked at: {formatLastCheckedAt(trip.last_checked_at)}</div>
+          <div className="mt-1 text-sm text-gray-600">{t('tripDetail.lastCheckedAt', { date: formatLastCheckedAt(t, trip.last_checked_at) })}</div>
         </div>
       </div>
 
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-        <h3 className="text-sm font-semibold text-gray-900">Price history</h3>
+        <h3 className="text-sm font-semibold text-gray-900">{t('tripDetail.priceHistory')}</h3>
         {events.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-600">{notPublished ? 'No price changes yet. Trip not yet published.' : 'No price changes yet.'}</p>
+          <p className="mt-3 text-sm text-gray-600">{notPublished ? t('tripDetail.noPriceChangesUnpublished') : t('tripDetail.noPriceChanges')}</p>
         ) : (
           <ul className="mt-3 divide-y divide-gray-100">
             {events.map((ev) => {
@@ -220,10 +223,8 @@ export function TripDetailPage() {
         <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl ring-1 ring-black/5">
-            <DialogTitle className="text-base font-semibold text-gray-900">Remove tracked trip?</DialogTitle>
-            <p className="mt-2 text-sm text-gray-600">
-              This will stop tracking this trip and remove it from the list. Price history will be deleted. This cannot be undone.
-            </p>
+            <DialogTitle className="text-base font-semibold text-gray-900">{t('tripDetail.removeTitle')}</DialogTitle>
+            <p className="mt-2 text-sm text-gray-600">{t('tripDetail.removeBody')}</p>
             <div className="mt-5 flex justify-end gap-3">
               <button
                 type="button"
@@ -231,7 +232,7 @@ export function TripDetailPage() {
                 onClick={() => setRemoveOpen(false)}
                 className="rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -243,7 +244,7 @@ export function TripDetailPage() {
                     await deleteTrip(tripId)
                     navigate('/')
                   } catch (e) {
-                    setError(e instanceof Error ? e.message : 'Could not remove trip')
+                    setError(e instanceof Error ? e.message : t('tripDetail.errorCouldNotRemove'))
                   } finally {
                     setRemoving(false)
                     setRemoveOpen(false)
@@ -251,7 +252,7 @@ export function TripDetailPage() {
                 }}
                 className="rounded-md bg-renfe-red px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-renfe-redHover disabled:opacity-60"
               >
-                Remove
+                {t('common.remove')}
               </button>
             </div>
           </DialogPanel>
@@ -260,4 +261,3 @@ export function TripDetailPage() {
     </div>
   )
 }
-

@@ -1,6 +1,7 @@
 import { Combobox } from '@headlessui/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getSearchOptions, searchTrains } from '../api/client'
 import type { TrainResult } from '../api/types'
 
@@ -23,6 +24,7 @@ function StationCombobox(props: {
   onChange: (value: string) => void
   options: string[]
   placeholder?: string
+  noMatchesText: string
 }) {
   const [query, setQuery] = useState('')
   const filtered = useMemo(() => {
@@ -45,11 +47,11 @@ function StationCombobox(props: {
             className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-renfe-purple focus:outline-none focus:ring-2 focus:ring-renfe-purple/30"
             displayValue={(v: string) => v}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={props.placeholder ?? 'Start typing a station'}
+            placeholder={props.placeholder}
           />
           <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-lg focus:outline-none">
             {filtered.length === 0 ? (
-              <div className="px-3 py-2 text-gray-500">No matches</div>
+              <div className="px-3 py-2 text-gray-500">{props.noMatchesText}</div>
             ) : (
               filtered.map((opt) => (
                 <Combobox.Option
@@ -72,6 +74,7 @@ function StationCombobox(props: {
 
 export function SearchPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [date, setDate] = useState(defaultTomorrowIso())
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
@@ -105,8 +108,8 @@ export function SearchPage() {
     <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Search trains</h2>
-          <p className="mt-1 text-sm text-gray-600">Find trains by date and route, then track a specific departure.</p>
+          <h2 className="text-base font-semibold text-gray-900">{t('search.title')}</h2>
+          <p className="mt-1 text-sm text-gray-600">{t('search.description')}</p>
         </div>
         <button
           type="button"
@@ -117,7 +120,7 @@ export function SearchPage() {
           }}
           className="rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-renfe-purple focus:ring-offset-2"
         >
-          ⇅ Swap
+          {t('search.swap')}
         </button>
       </div>
 
@@ -136,7 +139,7 @@ export function SearchPage() {
             sessionStorage.setItem('renfe_search', JSON.stringify(payload))
             navigate('/results')
           } catch (err) {
-            setError(err instanceof Error ? err.message : 'Search failed')
+            setError(err instanceof Error ? err.message : t('search.searchBtn'))
           } finally {
             setLoading(false)
           }
@@ -144,7 +147,7 @@ export function SearchPage() {
       >
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-gray-900" htmlFor="search-date">
-            Date
+            {t('search.date')}
           </label>
           <input
             id="search-date"
@@ -157,18 +160,20 @@ export function SearchPage() {
         </div>
 
         <StationCombobox
-          label="Origin"
+          label={t('search.origin')}
           value={origin}
           onChange={setOrigin}
           options={options}
-          placeholder={loadingOptions ? 'Loading stations…' : 'Start typing a station'}
+          placeholder={loadingOptions ? t('search.loadingStations') : t('search.startTyping')}
+          noMatchesText={t('search.noMatches')}
         />
         <StationCombobox
-          label="Destination"
+          label={t('search.destination')}
           value={destination}
           onChange={setDestination}
           options={options}
-          placeholder={loadingOptions ? 'Loading stations…' : 'Start typing a station'}
+          placeholder={loadingOptions ? t('search.loadingStations') : t('search.startTyping')}
+          noMatchesText={t('search.noMatches')}
         />
 
         {error && (
@@ -197,10 +202,10 @@ export function SearchPage() {
                     d="M4 12a8 8 0 0 1 8-8v2.5a5.5 5.5 0 0 0-5.5 5.5H4z"
                   />
                 </svg>
-                Searching… (may take 1–2 minutes)
+                {t('search.searching')}
               </span>
             ) : (
-              'Search'
+              t('search.searchBtn')
             )}
           </button>
         </div>
@@ -208,4 +213,3 @@ export function SearchPage() {
     </div>
   )
 }
-
