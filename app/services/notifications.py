@@ -28,19 +28,164 @@ def build_price_change_summary(
     departure_time: Optional[str],
     old_price: Optional[float],
     new_price: float,
+    direction: Optional[str] = None,
+    trip_date: Optional[str] = None,
+    train_identifier: Optional[str] = None,
 ) -> str:
-    """Build message summary used across all notification systems."""
+    """Build plain-text message summary used across all notification systems."""
 
     def _fmt_price(p: Optional[float]) -> str:
-        if p is None:
-            return "N/A"
-        return f"{p:.2f}"
+        return "N/A" if p is None else f"€{p:.2f}"
 
     dep = departure_time.strip() if departure_time else "N/A"
+    date_str = f" on {trip_date}" if trip_date else ""
+    train_str = f" ({train_identifier})" if train_identifier else ""
+
+    if direction == "down" and old_price is not None:
+        diff = old_price - new_price
+        verb = f"dropped by €{diff:.2f}"
+    elif direction == "up" and old_price is not None:
+        diff = new_price - old_price
+        verb = f"increased by €{diff:.2f}"
+    else:
+        verb = "changed"
+
     return (
-        f"Trip - {origin} -> {destination}, {dep}, "
-        f"changed price from {_fmt_price(old_price)} to {_fmt_price(new_price)}"
+        f"Price {verb}: {origin} → {destination}{date_str}, dep. {dep}{train_str}. "
+        f"Price: {_fmt_price(old_price)} → {_fmt_price(new_price)}"
     )
+
+
+def _build_email_html(
+    *,
+    origin: str,
+    destination: str,
+    departure_time: Optional[str],
+    old_price: Optional[float],
+    new_price: float,
+    direction: Optional[str],
+    trip_date: Optional[str],
+    train_identifier: Optional[str],
+) -> str:
+    """Build an HTML email body for a price change notification."""
+
+    dep = departure_time.strip() if departure_time else "N/A"
+    date_str = trip_date or ""
+    train_str = train_identifier or ""
+
+    def _fmt(p: Optional[float]) -> str:
+        return "N/A" if p is None else f"€{p:.2f}"
+
+    # Direction-specific copy
+    if direction == "down":
+        direction_label = "↓ Price dropped"
+        direction_verb = "dropped"
+        badge_bg = "#dcfce7"
+        badge_color = "#166534"
+        new_price_color = "#16a34a"
+    elif direction == "up":
+        direction_label = "↑ Price increased"
+        direction_verb = "increased"
+        badge_bg = "#fee2e2"
+        badge_color = "#991b1b"
+        new_price_color = "#dc2626"
+    else:
+        direction_label = "Price changed"
+        direction_verb = "changed"
+        badge_bg = "#e0e7ff"
+        badge_color = "#3730a3"
+        new_price_color = "#374151"
+
+    # Difference row (only when we have an old price)
+    if old_price is not None:
+        diff = new_price - old_price
+        diff_sign = "+" if diff >= 0 else "−"
+        diff_abs = abs(diff)
+        diff_color = "#16a34a" if diff < 0 else "#dc2626"
+        diff_row = f"""
+              <tr>
+                <td colspan="3" style="text-align:center;padding-top:12px;">
+                  <span style="font-size:14px;font-weight:600;color:{diff_color};">
+                    {diff_sign}€{diff_abs:.2f} compared to previous price
+                  </span>
+                </td>
+              </tr>"""
+    else:
+        diff_row = ""
+
+    meta_parts = []
+    if date_str:
+        meta_parts.append(date_str)
+    if dep != "N/A":
+        meta_parts.append(f"Dep. {dep}")
+    if train_str:
+        meta_parts.append(train_str)
+    meta_line = " · ".join(meta_parts) if meta_parts else "&nbsp;"
+
+    old_price_cell = (
+        f"""<td style="text-align:center;padding:0 16px 0 0;">
+                  <p style="margin:0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">Previous</p>
+                  <p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#9ca3af;text-decoration:line-through;">{_fmt(old_price)}</p>
+                </td>
+                <td style="text-align:center;padding:0 12px;font-size:22px;color:#d1205c;">→</td>"""
+        if old_price is not None
+        else ""
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
+        <!-- Header gradient -->
+        <tr>
+          <td style="background:linear-gradient(90deg,#d1205c 0%,#a03078 35%,#6d2d82 65%,#4a2b7f 100%);padding:20px 28px;">
+            <span style="font-size:18px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">Renfe Tracker</span>
+          </td>
+        </tr>
+        <!-- Alert label + heading -->
+        <tr>
+          <td style="padding:28px 28px 0;">
+            <span style="display:inline-block;background:{badge_bg};color:{badge_color};border-radius:9999px;padding:3px 12px;font-size:13px;font-weight:600;">{direction_label}</span>
+            <h1 style="margin:10px 0 0;font-size:20px;font-weight:700;color:#111827;">Price {direction_verb} for your tracked trip</h1>
+          </td>
+        </tr>
+        <!-- Route + meta -->
+        <tr>
+          <td style="padding:16px 28px 0;">
+            <p style="margin:0;font-size:17px;font-weight:600;color:#1f2937;">
+              {origin}&nbsp;<span style="color:#d1205c;">→</span>&nbsp;{destination}
+            </p>
+            <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">{meta_line}</p>
+          </td>
+        </tr>
+        <!-- Price block -->
+        <tr>
+          <td style="padding:20px 28px;">
+            <table cellpadding="0" cellspacing="0" style="width:100%;background:#f9fafb;border-radius:8px;padding:18px 12px;">
+              <tr>
+                {old_price_cell}
+                <td style="text-align:center;padding:0;">
+                  <p style="margin:0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">New price</p>
+                  <p style="margin:4px 0 0;font-size:28px;font-weight:700;color:{new_price_color};">{_fmt(new_price)}</p>
+                </td>
+              </tr>{diff_row}
+            </table>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="padding:0 28px 24px;border-top:1px solid #f3f4f6;">
+            <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">Renfe Tracker · Automated price alert</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
 
 
 async def dispatch_price_change_notifications(
@@ -52,6 +197,9 @@ async def dispatch_price_change_notifications(
     departure_time: Optional[str],
     old_price: Optional[float],
     new_price: float,
+    direction: Optional[str] = None,
+    trip_date: Optional[str] = None,
+    train_identifier: Optional[str] = None,
 ) -> None:
     """
     Best-effort notification dispatch.
@@ -64,6 +212,9 @@ async def dispatch_price_change_notifications(
         departure_time=departure_time,
         old_price=old_price,
         new_price=new_price,
+        direction=direction,
+        trip_date=trip_date,
+        train_identifier=train_identifier,
     )
 
     notifications = await db_notifications.list_notifications_for_dispatch(conn)
@@ -74,7 +225,18 @@ async def dispatch_price_change_notifications(
         ntype = n.get("type")
         try:
             if ntype == "email":
-                await _send_email_notification(n, summary)
+                await _send_email_notification(
+                    n,
+                    summary,
+                    origin=origin,
+                    destination=destination,
+                    departure_time=departure_time,
+                    old_price=old_price,
+                    new_price=new_price,
+                    direction=direction,
+                    trip_date=trip_date,
+                    train_identifier=train_identifier,
+                )
             elif ntype == "home_assistant":
                 await _send_home_assistant_notification(n, summary)
             else:
@@ -91,7 +253,19 @@ async def dispatch_price_change_notifications(
             )
 
 
-async def _send_email_notification(n: dict, summary: str) -> None:
+async def _send_email_notification(
+    n: dict,
+    summary: str,
+    *,
+    origin: str,
+    destination: str,
+    departure_time: Optional[str],
+    old_price: Optional[float],
+    new_price: float,
+    direction: Optional[str],
+    trip_date: Optional[str],
+    train_identifier: Optional[str],
+) -> None:
     smtp_host = config.SMTP_HOST
     smtp_port = config.SMTP_PORT
     smtp_username = config.SMTP_USERNAME
@@ -100,7 +274,17 @@ async def _send_email_notification(n: dict, summary: str) -> None:
     email_from = config.SMTP_FROM
 
     email_to = n.get("email_to")
-    subject = n.get("email_subject") or "Renfe Tracker - price changed"
+
+    # Build dynamic subject
+    configured_subject = n.get("email_subject")
+    if configured_subject:
+        subject = configured_subject
+    elif direction == "down":
+        subject = f"↓ Price dropped — {origin} → {destination} | Renfe Tracker"
+    elif direction == "up":
+        subject = f"↑ Price increased — {origin} → {destination} | Renfe Tracker"
+    else:
+        subject = f"Price changed — {origin} → {destination} | Renfe Tracker"
 
     if not smtp_host or not smtp_username or not smtp_password:
         logger.warning(
@@ -118,12 +302,25 @@ async def _send_email_notification(n: dict, summary: str) -> None:
         logger.warning("Email notification has empty recipient list; skipping (id=%s)", n.get("id"))
         return
 
+    html_body = _build_email_html(
+        origin=origin,
+        destination=destination,
+        departure_time=departure_time,
+        old_price=old_price,
+        new_price=new_price,
+        direction=direction,
+        trip_date=trip_date,
+        train_identifier=train_identifier,
+    )
+
     def _send_blocking() -> None:
         msg = EmailMessage()
         msg["From"] = email_from or smtp_username
         msg["To"] = ", ".join(to_addrs)
         msg["Subject"] = subject
+        # Plain-text fallback first, then HTML alternative
         msg.set_content(summary)
+        msg.add_alternative(html_body, subtype="html")
 
         with smtplib.SMTP(str(smtp_host), int(smtp_port), timeout=10) as smtp:
             smtp.ehlo()

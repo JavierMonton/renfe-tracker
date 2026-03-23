@@ -209,6 +209,9 @@ async def run_price_check(db_path: str) -> None:
                     departure_time=trip.get("departure_time"),
                     old_price=current_rounded,
                     new_price=new_price_rounded,
+                    direction=direction,
+                    trip_date=trip.get("date"),
+                    train_identifier=trip.get("train_identifier"),
                 )
             except Exception as e:
                 logger.warning(
