@@ -14,7 +14,7 @@ import type {
 
 export function NotificationCreatePage() {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [type, setType] = useState<NotificationType>('email')
   const [label, setLabel] = useState('')
 
@@ -27,7 +27,7 @@ export function NotificationCreatePage() {
   }, [])
 
   const [toEmail, setToEmail] = useState('')
-  const [emailSubject, setEmailSubject] = useState('Price change alert')
+  const [emailSubject, setEmailSubject] = useState(() => t('emailNotif.defaultSubject'))
 
   const [haNotifyService, setHaNotifyService] = useState('mobile_app')
 
@@ -54,7 +54,7 @@ export function NotificationCreatePage() {
     setSavedOpen(false)
     if (type === 'email') {
       setToEmail('')
-      setEmailSubject('Price change alert')
+      setEmailSubject(t('emailNotif.defaultSubject'))
     }
     if (type === 'home_assistant') {
       setHaNotifyService('mobile_app')
@@ -86,6 +86,7 @@ export function NotificationCreatePage() {
         const body: CreateEmailNotificationBody = {
           type: 'email',
           label: trimmedLabel,
+          language: i18n.language,
           email_to: to,
           email_subject: subject,
         }
@@ -104,6 +105,7 @@ export function NotificationCreatePage() {
         const body: CreateHomeAssistantNotificationBody = {
           type: 'home_assistant',
           label: trimmedLabel,
+          language: i18n.language,
           ha_notify_service: notifyService,
         }
 
@@ -125,6 +127,7 @@ export function NotificationCreatePage() {
         const browserBody: CreateBrowserNotificationBody = {
           type: 'browser',
           label: trimmedLabel,
+          language: i18n.language,
         }
         await createNotification(browserBody)
         setSavedSummary(

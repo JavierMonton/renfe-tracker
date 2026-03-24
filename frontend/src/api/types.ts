@@ -120,6 +120,7 @@ export interface NotificationConfigStatus {
 export interface CreateEmailNotificationBody {
   type: 'email'
   label?: string | null
+  language?: string
   email_to: string
   email_subject?: string | null
 }
@@ -127,12 +128,14 @@ export interface CreateEmailNotificationBody {
 export interface CreateHomeAssistantNotificationBody {
   type: 'home_assistant'
   label?: string | null
+  language?: string
   ha_notify_service: string
 }
 
 export interface CreateBrowserNotificationBody {
   type: 'browser'
   label?: string | null
+  language?: string
 }
 
 export type CreateNotificationBody =

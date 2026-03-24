@@ -20,6 +20,8 @@ RUN pip install --no-cache-dir uv \
 COPY pyproject.toml uv.lock README.md ./
 COPY app/ app/
 COPY renfe_mcp/ renfe_mcp/
+# Bundle i18n translation files so the backend can generate localised emails
+COPY frontend/src/i18n/ app/i18n/
 RUN uv sync --frozen --no-dev
 
 # Replace static assets with compiled React build

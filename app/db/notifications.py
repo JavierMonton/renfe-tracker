@@ -21,6 +21,7 @@ async def create_notification(
     *,
     type: str,
     label: Optional[str] = None,
+    language: Optional[str] = None,
     # Email (user-facing only – no SMTP credentials)
     email_to: Optional[str] = None,
     email_subject: Optional[str] = None,
@@ -32,10 +33,10 @@ async def create_notification(
 
     cursor = await conn.execute(
         """
-        INSERT INTO notifications (type, label, email_to, email_subject, ha_notify_service)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO notifications (type, label, language, email_to, email_subject, ha_notify_service)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
-        (type, label, email_to, email_subject, ha_notify_service),
+        (type, label, language or "en", email_to, email_subject, ha_notify_service),
     )
     await conn.commit()
     return int(cursor.lastrowid)
@@ -74,7 +75,7 @@ async def list_notifications_for_dispatch(conn: aiosqlite.Connection) -> list[di
     """
     cursor = await conn.execute(
         """
-        SELECT id, type, label, email_to, email_subject, ha_notify_service
+        SELECT id, type, label, language, email_to, email_subject, ha_notify_service
         FROM notifications
         WHERE type IN ('email', 'home_assistant')
         ORDER BY created_at DESC
@@ -88,6 +89,7 @@ async def list_notifications_for_dispatch(conn: aiosqlite.Connection) -> list[di
                 "id": r["id"],
                 "type": r["type"],
                 "label": r["label"],
+                "language": r["language"] or "en",
                 "email_to": r["email_to"],
                 "email_subject": r["email_subject"],
                 "ha_notify_service": r["ha_notify_service"],

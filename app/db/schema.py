@@ -111,6 +111,7 @@ NOTIFICATIONS_ALTER_COLUMNS = [
     ("webpush_vapid_subject", "TEXT"),
     ("webpush_vapid_public_key", "TEXT"),
     ("webpush_vapid_private_key", "TEXT"),
+    ("language", "TEXT"),
 ]
 
 

@@ -141,6 +141,28 @@
     "errorBrowserNotSupported": "Browser notifications are not supported in this browser.",
     "errorCouldNotSave": "Could not save notification"
   },
+  "emailNotif": {
+    "defaultSubject": "Price change alert",
+    "plainVerbDown": "dropped by €{{amount}}",
+    "plainVerbUp": "increased by €{{amount}}",
+    "plainVerbChanged": "changed",
+    "plainDatePart": " on {{date}}",
+    "plainDepPrefix": "dep.",
+    "plainSummary": "Price {{verb}}: {{origin}} → {{destination}}{{datePart}}, {{depPrefix}} {{departure}}{{trainPart}}. Price: {{oldPrice}} → {{newPrice}}",
+    "subjectDown": "↓ Price dropped — {{origin}} → {{destination}} | Renfe Tracker",
+    "subjectUp": "↑ Price increased — {{origin}} → {{destination}} | Renfe Tracker",
+    "subjectChanged": "Price changed — {{origin}} → {{destination}} | Renfe Tracker",
+    "badgeDown": "↓ Price dropped",
+    "badgeUp": "↑ Price increased",
+    "badgeChanged": "Price changed",
+    "headingDown": "Price dropped for your tracked trip",
+    "headingUp": "Price increased for your tracked trip",
+    "headingChanged": "Price changed for your tracked trip",
+    "labelPrevious": "Previous",
+    "labelNewPrice": "New price",
+    "diffLabel": "{{diff}} compared to previous price",
+    "footer": "Renfe Tracker · Automated price alert"
+  },
   "browserNotif": {
     "title": "Renfe Tracker",
     "body": "Trip {{origin}} → {{destination}}, {{departure}}, price changed from {{oldPrice}} to {{newPrice}}"

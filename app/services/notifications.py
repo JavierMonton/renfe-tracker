@@ -17,6 +17,7 @@ import httpx
 
 from app import config
 from app.db import notifications as db_notifications
+from app.i18n import t
 
 logger = logging.getLogger("renfe_tracker.notifications")
 
@@ -31,6 +32,7 @@ def build_price_change_summary(
     direction: Optional[str] = None,
     trip_date: Optional[str] = None,
     train_identifier: Optional[str] = None,
+    lang: str = "en",
 ) -> str:
     """Build plain-text message summary used across all notification systems."""
 
@@ -38,21 +40,31 @@ def build_price_change_summary(
         return "N/A" if p is None else f"€{p:.2f}"
 
     dep = departure_time.strip() if departure_time else "N/A"
-    date_str = f" on {trip_date}" if trip_date else ""
-    train_str = f" ({train_identifier})" if train_identifier else ""
+    date_part = t(lang, "emailNotif.plainDatePart", date=trip_date) if trip_date else ""
+    train_part = f" ({train_identifier})" if train_identifier else ""
+    dep_prefix = t(lang, "emailNotif.plainDepPrefix")
 
     if direction == "down" and old_price is not None:
         diff = old_price - new_price
-        verb = f"dropped by €{diff:.2f}"
+        verb = t(lang, "emailNotif.plainVerbDown", amount=f"{diff:.2f}")
     elif direction == "up" and old_price is not None:
         diff = new_price - old_price
-        verb = f"increased by €{diff:.2f}"
+        verb = t(lang, "emailNotif.plainVerbUp", amount=f"{diff:.2f}")
     else:
-        verb = "changed"
+        verb = t(lang, "emailNotif.plainVerbChanged")
 
-    return (
-        f"Price {verb}: {origin} → {destination}{date_str}, dep. {dep}{train_str}. "
-        f"Price: {_fmt_price(old_price)} → {_fmt_price(new_price)}"
+    return t(
+        lang,
+        "emailNotif.plainSummary",
+        verb=verb,
+        origin=origin,
+        destination=destination,
+        datePart=date_part,
+        depPrefix=dep_prefix,
+        departure=dep,
+        trainPart=train_part,
+        oldPrice=_fmt_price(old_price),
+        newPrice=_fmt_price(new_price),
     )
 
 
@@ -66,6 +78,7 @@ def _build_email_html(
     direction: Optional[str],
     trip_date: Optional[str],
     train_identifier: Optional[str],
+    lang: str = "en",
 ) -> str:
     """Build an HTML email body for a price change notification."""
 
@@ -76,22 +89,22 @@ def _build_email_html(
     def _fmt(p: Optional[float]) -> str:
         return "N/A" if p is None else f"€{p:.2f}"
 
-    # Direction-specific copy
+    # Direction-specific copy (translated)
     if direction == "down":
-        direction_label = "↓ Price dropped"
-        direction_verb = "dropped"
+        direction_label = t(lang, "emailNotif.badgeDown")
+        direction_heading = t(lang, "emailNotif.headingDown")
         badge_bg = "#dcfce7"
         badge_color = "#166534"
         new_price_color = "#16a34a"
     elif direction == "up":
-        direction_label = "↑ Price increased"
-        direction_verb = "increased"
+        direction_label = t(lang, "emailNotif.badgeUp")
+        direction_heading = t(lang, "emailNotif.headingUp")
         badge_bg = "#fee2e2"
         badge_color = "#991b1b"
         new_price_color = "#dc2626"
     else:
-        direction_label = "Price changed"
-        direction_verb = "changed"
+        direction_label = t(lang, "emailNotif.badgeChanged")
+        direction_heading = t(lang, "emailNotif.headingChanged")
         badge_bg = "#e0e7ff"
         badge_color = "#3730a3"
         new_price_color = "#374151"
@@ -102,11 +115,12 @@ def _build_email_html(
         diff_sign = "+" if diff >= 0 else "−"
         diff_abs = abs(diff)
         diff_color = "#16a34a" if diff < 0 else "#dc2626"
+        diff_text = t(lang, "emailNotif.diffLabel", diff=f"{diff_sign}€{diff_abs:.2f}")
         diff_row = f"""
               <tr>
                 <td colspan="3" style="text-align:center;padding-top:12px;">
                   <span style="font-size:14px;font-weight:600;color:{diff_color};">
-                    {diff_sign}€{diff_abs:.2f} compared to previous price
+                    {diff_text}
                   </span>
                 </td>
               </tr>"""
@@ -114,17 +128,22 @@ def _build_email_html(
         diff_row = ""
 
     meta_parts = []
+    dep_prefix = t(lang, "emailNotif.plainDepPrefix")
     if date_str:
         meta_parts.append(date_str)
     if dep != "N/A":
-        meta_parts.append(f"Dep. {dep}")
+        meta_parts.append(f"{dep_prefix} {dep}")
     if train_str:
         meta_parts.append(train_str)
     meta_line = " · ".join(meta_parts) if meta_parts else "&nbsp;"
 
+    label_previous = t(lang, "emailNotif.labelPrevious")
+    label_new_price = t(lang, "emailNotif.labelNewPrice")
+    footer_text = t(lang, "emailNotif.footer")
+
     old_price_cell = (
         f"""<td style="text-align:center;padding:0 16px 0 0;">
-                  <p style="margin:0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">Previous</p>
+                  <p style="margin:0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">{label_previous}</p>
                   <p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#9ca3af;text-decoration:line-through;">{_fmt(old_price)}</p>
                 </td>
                 <td style="text-align:center;padding:0 12px;font-size:22px;color:#d1205c;">→</td>"""
@@ -133,7 +152,7 @@ def _build_email_html(
     )
 
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
@@ -149,7 +168,7 @@ def _build_email_html(
         <tr>
           <td style="padding:28px 28px 0;">
             <span style="display:inline-block;background:{badge_bg};color:{badge_color};border-radius:9999px;padding:3px 12px;font-size:13px;font-weight:600;">{direction_label}</span>
-            <h1 style="margin:10px 0 0;font-size:20px;font-weight:700;color:#111827;">Price {direction_verb} for your tracked trip</h1>
+            <h1 style="margin:10px 0 0;font-size:20px;font-weight:700;color:#111827;">{direction_heading}</h1>
           </td>
         </tr>
         <!-- Route + meta -->
@@ -168,7 +187,7 @@ def _build_email_html(
               <tr>
                 {old_price_cell}
                 <td style="text-align:center;padding:0;">
-                  <p style="margin:0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">New price</p>
+                  <p style="margin:0;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;">{label_new_price}</p>
                   <p style="margin:4px 0 0;font-size:28px;font-weight:700;color:{new_price_color};">{_fmt(new_price)}</p>
                 </td>
               </tr>{diff_row}
@@ -178,7 +197,7 @@ def _build_email_html(
         <!-- Footer -->
         <tr>
           <td style="padding:0 28px 24px;border-top:1px solid #f3f4f6;">
-            <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">Renfe Tracker · Automated price alert</p>
+            <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">{footer_text}</p>
           </td>
         </tr>
       </table>
@@ -206,24 +225,25 @@ async def dispatch_price_change_notifications(
 
     Failures are logged and swallowed so the scheduler never stops price tracking.
     """
-    summary = build_price_change_summary(
-        origin=origin,
-        destination=destination,
-        departure_time=departure_time,
-        old_price=old_price,
-        new_price=new_price,
-        direction=direction,
-        trip_date=trip_date,
-        train_identifier=train_identifier,
-    )
-
     notifications = await db_notifications.list_notifications_for_dispatch(conn)
     if not notifications:
         return
 
     for n in notifications:
         ntype = n.get("type")
+        lang = n.get("language") or "en"
         try:
+            summary = build_price_change_summary(
+                origin=origin,
+                destination=destination,
+                departure_time=departure_time,
+                old_price=old_price,
+                new_price=new_price,
+                direction=direction,
+                trip_date=trip_date,
+                train_identifier=train_identifier,
+                lang=lang,
+            )
             if ntype == "email":
                 await _send_email_notification(
                     n,
@@ -236,6 +256,7 @@ async def dispatch_price_change_notifications(
                     direction=direction,
                     trip_date=trip_date,
                     train_identifier=train_identifier,
+                    lang=lang,
                 )
             elif ntype == "home_assistant":
                 await _send_home_assistant_notification(n, summary)
@@ -265,6 +286,7 @@ async def _send_email_notification(
     direction: Optional[str],
     trip_date: Optional[str],
     train_identifier: Optional[str],
+    lang: str = "en",
 ) -> None:
     smtp_host = config.SMTP_HOST
     smtp_port = config.SMTP_PORT
@@ -275,16 +297,16 @@ async def _send_email_notification(
 
     email_to = n.get("email_to")
 
-    # Build dynamic subject
+    # Build subject: use user-provided custom subject if set, otherwise auto-generate (translated)
     configured_subject = n.get("email_subject")
     if configured_subject:
         subject = configured_subject
     elif direction == "down":
-        subject = f"↓ Price dropped — {origin} → {destination} | Renfe Tracker"
+        subject = t(lang, "emailNotif.subjectDown", origin=origin, destination=destination)
     elif direction == "up":
-        subject = f"↑ Price increased — {origin} → {destination} | Renfe Tracker"
+        subject = t(lang, "emailNotif.subjectUp", origin=origin, destination=destination)
     else:
-        subject = f"Price changed — {origin} → {destination} | Renfe Tracker"
+        subject = t(lang, "emailNotif.subjectChanged", origin=origin, destination=destination)
 
     if not smtp_host or not smtp_username or not smtp_password:
         logger.warning(
@@ -311,6 +333,7 @@ async def _send_email_notification(
         direction=direction,
         trip_date=trip_date,
         train_identifier=train_identifier,
+        lang=lang,
     )
 
     def _send_blocking() -> None:

@@ -141,6 +141,28 @@
     "errorBrowserNotSupported": "Les notificacions del navegador no estan admeses en aquest navegador.",
     "errorCouldNotSave": "No s'ha pogut desar la notificació"
   },
+  "emailNotif": {
+    "defaultSubject": "Alerta de canvi de preu",
+    "plainVerbDown": "baixat €{{amount}}",
+    "plainVerbUp": "pujat €{{amount}}",
+    "plainVerbChanged": "canviat",
+    "plainDatePart": " el {{date}}",
+    "plainDepPrefix": "sortida",
+    "plainSummary": "Preu {{verb}}: {{origin}} → {{destination}}{{datePart}}, {{depPrefix}} {{departure}}{{trainPart}}. Preu: {{oldPrice}} → {{newPrice}}",
+    "subjectDown": "↓ Preu baixat — {{origin}} → {{destination}} | Renfe Tracker",
+    "subjectUp": "↑ Preu pujat — {{origin}} → {{destination}} | Renfe Tracker",
+    "subjectChanged": "Preu canviat — {{origin}} → {{destination}} | Renfe Tracker",
+    "badgeDown": "↓ Preu baixat",
+    "badgeUp": "↑ Preu pujat",
+    "badgeChanged": "Preu canviat",
+    "headingDown": "El preu ha baixat en el teu viatge seguit",
+    "headingUp": "El preu ha pujat en el teu viatge seguit",
+    "headingChanged": "El preu ha canviat en el teu viatge seguit",
+    "labelPrevious": "Anterior",
+    "labelNewPrice": "Preu nou",
+    "diffLabel": "{{diff}} respecte al preu anterior",
+    "footer": "Renfe Tracker · Alerta de preu automàtica"
+  },
   "browserNotif": {
     "title": "Renfe Tracker",
     "body": "Viatge {{origin}} → {{destination}}, {{departure}}, el preu ha canviat de {{oldPrice}} a {{newPrice}}"

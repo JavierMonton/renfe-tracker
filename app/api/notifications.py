@@ -29,6 +29,7 @@ NotificationType = Literal["email", "home_assistant", "browser"]
 class CreateNotificationBody(BaseModel):
     type: NotificationType
     label: Optional[str] = None
+    language: Optional[str] = None
 
     # Email – user-facing only (SMTP connection details come from env vars)
     email_to: Optional[str] = None
@@ -37,7 +38,7 @@ class CreateNotificationBody(BaseModel):
     # Home Assistant – user-facing only (URL and token come from env vars)
     ha_notify_service: Optional[str] = None
 
-    @field_validator("label", "email_to", "email_subject", "ha_notify_service")
+    @field_validator("label", "email_to", "email_subject", "ha_notify_service", "language")
     @classmethod
     def _strip_or_none(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
@@ -80,6 +81,7 @@ async def create_notification(body: CreateNotificationBody, request: Request):
             conn,
             type=body.type,
             label=body.label,
+            language=body.language,
             email_to=body.email_to,
             email_subject=body.email_subject,
             ha_notify_service=body.ha_notify_service,
