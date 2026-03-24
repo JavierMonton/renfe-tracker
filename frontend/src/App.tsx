@@ -17,7 +17,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-gray-100">
       <BrowserNotificationsManager />
       <header className="bg-renfeHeader text-white shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
@@ -39,7 +39,7 @@ function App() {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
@@ -49,7 +49,7 @@ function App() {
           <Route path="/trip/:id" element={<TripDetailPage />} />
         </Routes>
       </main>
-      <footer className="mt-8 border-t border-stone-300 bg-stone-200 py-4">
+      <footer className="border-t border-stone-300 bg-stone-200 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4">
           <a
             href="https://github.com/JavierMonton/renfe-tracker"
