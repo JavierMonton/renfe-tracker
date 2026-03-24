@@ -49,3 +49,23 @@ docker compose up -d
 ```
 
 See the [Installation](./installation) page for full details, including Docker run and local development options.
+
+## Features
+
+### Price Ranges & Possible Trains
+
+When searching for trains, the app shows estimated price ranges based on historical data and highlights trains that may not be published yet for your date.
+
+![Search screenshot](/img/search-screenshot.png)
+
+### Track multiple trips
+
+Follow multiple trips simultaneously and get notified when the price changes.
+
+![Trips screenshot](/img/trips-screenshot.png)
+
+### Historical price changes
+
+See the full price change history for any tracked trip.
+
+![Prices screenshot](/img/prices-screenshot.png)

@@ -53,3 +53,23 @@ docker compose up --build -d
 ```
 
 Consulta la pàgina d'[Instal·lació](./installation) per a més detalls, incloent-hi les opcions de `docker run` i desenvolupament local.
+
+## Funcionalitats
+
+### Rangs de preu i trens possibles
+
+En cercar trens, l'app mostra rangs de preu estimats basats en dades històriques i destaca els trens que poden no estar publicats encara per a la teva data.
+
+![Captura de cerca](/img/search-screenshot.png)
+
+### Segueix múltiples viatges
+
+Segueix diversos viatges alhora i rep notificacions quan canviï el preu.
+
+![Captura de viatges](/img/trips-screenshot.png)
+
+### Historial de canvis de preu
+
+Consulta l'historial complet de canvis de preu de qualsevol viatge seguit.
+
+![Captura d'historial de preus](/img/prices-screenshot.png)
