@@ -1,0 +1,37 @@
+/**
+ * Renfe Tracker – Docusaurus custom theme
+ * Inspired by Renfe's red brand colour.
+ */
+
+:root {
+  --ifm-color-primary: #c0392b;
+  --ifm-color-primary-dark: #a93226;
+  --ifm-color-primary-darker: #9b2d22;
+  --ifm-color-primary-darkest: #80251c;
+  --ifm-color-primary-light: #cc3d2f;
+  --ifm-color-primary-lighter: #d04133;
+  --ifm-color-primary-lightest: #d9544a;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #e74c3c;
+  --ifm-color-primary-dark: #e43725;
+  --ifm-color-primary-darker: #d63120;
+  --ifm-color-primary-darkest: #b0281a;
+  --ifm-color-primary-light: #ea6153;
+  --ifm-color-primary-lighter: #ec6e61;
+  --ifm-color-primary-lightest: #f09188;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+.hero--primary {
+  background: linear-gradient(135deg, #c0392b 0%, #8e44ad 100%);
+}
+
+.feature-card {
+  border-left: 4px solid var(--ifm-color-primary);
+  padding-left: 1rem;
+  margin-bottom: 1.5rem;
+}

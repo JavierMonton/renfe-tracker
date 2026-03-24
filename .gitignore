@@ -10,3 +10,8 @@ __pycache__/
 *.pyc
 *.pyo
 /.cursor/
+
+# Docusaurus
+website/node_modules/
+website/build/
+website/.docusaurus/
