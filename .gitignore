@@ -9,3 +9,4 @@ renfe_schedule/
 __pycache__/
 *.pyc
 *.pyo
+/.cursor/
