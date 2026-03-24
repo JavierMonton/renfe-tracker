@@ -1,8 +1,22 @@
 # Renfe Tracker
 
+[![Docker Hub](https://img.shields.io/docker/v/jmonton/renfe-tracker/latest?label=Docker%20Hub&logo=docker)](https://hub.docker.com/repository/docker/jmonton/renfe-tracker/tags)
+
 Track Renfe trains and prices (media/larga distancia). Self-hosted, runs in Docker.
 
-**Setup:** Dependencies are managed with [uv](https://github.com/astral-sh/uv). Run `uv sync` to create the environment and install from `pyproject.toml` / `uv.lock`.
+**Documentation:** [https://JavierMonton.github.io/renfe-tracker/](https://JavierMonton.github.io/renfe-tracker/)
+
+---
+
+## Table of Contents
+
+- [Run with Docker](#run-with-docker)
+  - [Running with compose (recommended for 24/7)](#running-with-compose-recommended-for-247)
+- [Configuration](#configuration)
+- [Data persistence](#data-persistence)
+- [Local development and tests](#local-development-and-tests)
+
+---
 
 ## Run with Docker
 
@@ -12,7 +26,7 @@ It exposes port **8000** and expects a **data volume** at `/data` (SQLite DB, GT
 
 ### Running with compose (recommended for 24/7)
 
-Copy the example compose file and start:
+Copy the [example compose file](docker-compose.example.yml) and start:
 
 ```bash
 cp docker-compose.example.yml docker-compose.yml
