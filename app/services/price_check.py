@@ -186,6 +186,11 @@ async def run_price_check(db_path: str) -> None:
                 )
             await db_trips.update_last_checked_at(conn, trip_id, now_str)
         else:
+            # If this is the very first price event and we have an initial_price,
+            # insert it as a baseline entry so the history shows the full transition.
+            if not events and current_rounded is not None:
+                baseline_time = trip.get("created_at") or now_str
+                await db_events.insert_price_event_at(conn, trip_id, current_rounded, baseline_time)
             await db_events.insert_price_event(conn, trip_id, new_price_rounded)
             direction = None
             if current_rounded is not None:

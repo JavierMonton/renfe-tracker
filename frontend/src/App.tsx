@@ -11,10 +11,9 @@ import { BrowserNotificationsManager } from './BrowserNotificationsManager'
 function App() {
   const { t, i18n } = useTranslation()
 
-  function toggleLanguage() {
-    const next = i18n.language === 'es' ? 'en' : 'es'
-    void i18n.changeLanguage(next)
-    localStorage.setItem('lang', next)
+  function setLanguage(lang: string) {
+    void i18n.changeLanguage(lang)
+    localStorage.setItem('lang', lang)
   }
 
   return (
@@ -63,13 +62,22 @@ function App() {
             </svg>
             Check on GitHub
           </a>
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="rounded-md border border-stone-400 px-2.5 py-1 text-xs font-semibold text-stone-600 hover:bg-stone-300 focus:outline-none focus:ring-2 focus:ring-renfe-purple focus:ring-offset-2"
-          >
-            {t('lang.switchTo')}
-          </button>
+          <div className="flex items-center gap-1">
+            {(['en', 'es', 'ca'] as const).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setLanguage(lang)}
+                className={`rounded-md px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-renfe-purple focus:ring-offset-2 ${
+                  i18n.language === lang
+                    ? 'bg-stone-400 text-stone-800'
+                    : 'border border-stone-400 text-stone-600 hover:bg-stone-300'
+                }`}
+              >
+                {lang.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
       </footer>
     </div>

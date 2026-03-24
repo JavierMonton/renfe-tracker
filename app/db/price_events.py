@@ -13,6 +13,17 @@ async def insert_price_event(
     return cursor.lastrowid
 
 
+async def insert_price_event_at(
+    conn: aiosqlite.Connection, trip_id: int, price_detected: float, detected_at: str
+) -> int:
+    cursor = await conn.execute(
+        "INSERT INTO price_events (trip_id, price_detected, detected_at) VALUES (?, ?, ?)",
+        (trip_id, price_detected, detected_at),
+    )
+    await conn.commit()
+    return cursor.lastrowid
+
+
 async def list_by_trip(conn: aiosqlite.Connection, trip_id: int) -> List[dict]:
     cursor = await conn.execute(
         "SELECT id, trip_id, price_detected, detected_at FROM price_events WHERE trip_id = ? ORDER BY detected_at DESC",
