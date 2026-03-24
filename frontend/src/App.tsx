@@ -62,6 +62,14 @@ function App() {
             </svg>
             Check on GitHub
           </a>
+          <a
+            href="https://javiermonton.github.io/renfe-tracker"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800"
+          >
+            Documentation
+          </a>
           <div className="flex items-center gap-1">
             {(['en', 'es', 'ca'] as const).map((lang) => (
               <button
