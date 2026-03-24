@@ -7,10 +7,10 @@ const config: Config = {
   tagline: 'Self-hosted Spanish train price tracker with alerts',
   favicon: 'img/favicon.ico',
 
-  url: 'https://YOUR_GITHUB_USERNAME.github.io',
+  url: 'https://JavierMonton.github.io',
   baseUrl: '/renfe-tracker/',
 
-  organizationName: 'YOUR_GITHUB_USERNAME',
+  organizationName: 'JavierMonton',
   projectName: 'renfe-tracker',
   trailingSlash: false,
 
@@ -19,7 +19,12 @@ const config: Config = {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'es', 'ca'],
+    localeConfigs: {
+      en: { label: 'English' },
+      es: { label: 'Español' },
+      ca: { label: 'Català' },
+    },
   },
 
   presets: [
@@ -30,7 +35,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           routeBasePath: '/',
           editUrl:
-            'https://github.com/YOUR_GITHUB_USERNAME/renfe-tracker/tree/main/website/',
+            'https://github.com/JavierMonton/renfe-tracker/tree/main/website/',
         },
         blog: false,
         theme: {
@@ -61,8 +66,12 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/YOUR_GITHUB_USERNAME/renfe-tracker',
+          href: 'https://github.com/JavierMonton/renfe-tracker',
           label: 'GitHub',
+          position: 'right',
+        },
+        {
+          type: 'localeDropdown',
           position: 'right',
         },
       ],
@@ -91,7 +100,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/YOUR_GITHUB_USERNAME/renfe-tracker',
+              href: 'https://github.com/JavierMonton/renfe-tracker',
             },
           ],
         },

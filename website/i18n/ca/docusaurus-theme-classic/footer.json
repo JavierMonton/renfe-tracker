@@ -1,0 +1,42 @@
+{
+  "link.title.Docs": {
+    "message": "Docs",
+    "description": "The title of the footer links column with title=Docs"
+  },
+  "link.title.Features": {
+    "message": "Funcionalitats",
+    "description": "The title of the footer links column with title=Features"
+  },
+  "link.title.More": {
+    "message": "Més",
+    "description": "The title of the footer links column with title=More"
+  },
+  "link.item.label.Getting Started": {
+    "message": "Primers passos",
+    "description": "Footer link with label Getting Started"
+  },
+  "link.item.label.Installation": {
+    "message": "Instal·lació",
+    "description": "Footer link with label Installation"
+  },
+  "link.item.label.Possible Trains": {
+    "message": "Trens Possibles",
+    "description": "Footer link with label Possible Trains"
+  },
+  "link.item.label.Price Range": {
+    "message": "Rang de Preus",
+    "description": "Footer link with label Price Range"
+  },
+  "link.item.label.Trip Tracking": {
+    "message": "Seguiment de Viatges",
+    "description": "Footer link with label Trip Tracking"
+  },
+  "link.item.label.Notifications": {
+    "message": "Notificacions",
+    "description": "Footer link with label Notifications"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Footer link with label GitHub"
+  }
+}

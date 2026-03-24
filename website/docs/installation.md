@@ -17,7 +17,7 @@ Docker Compose is the simplest option for a permanent, always-on deployment. The
 ### 1. Get the files
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/renfe-tracker.git
+git clone https://github.com/JavierMonton/renfe-tracker.git
 cd renfe-tracker
 cp docker-compose.example.yml docker-compose.yml
 ```
@@ -84,7 +84,7 @@ Use this if you prefer managing the container manually or want to integrate it i
 ### Build the image
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/renfe-tracker.git
+git clone https://github.com/JavierMonton/renfe-tracker.git
 cd renfe-tracker
 docker build -t renfe-tracker .
 ```

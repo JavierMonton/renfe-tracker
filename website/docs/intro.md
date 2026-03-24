@@ -40,7 +40,7 @@ The frontend is a React 19 + TypeScript single-page app served by the same proce
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_GITHUB_USERNAME/renfe-tracker.git
+git clone https://github.com/JavierMonton/renfe-tracker.git
 cd renfe-tracker
 
 # 2. Copy the example compose file
