@@ -7,13 +7,16 @@ from fastapi.testclient import TestClient
 
 
 def test_search_options_includes_zaragoza_calatayud_tafalla(client: TestClient):
-    """GET /api/search/options must include Zaragoza, Calatayud, Tafalla."""
+    """GET /api/search/options must include Zaragoza-Delicias, Calatayud, Tafalla."""
     r = client.get("/api/search/options")
     assert r.status_code == 200
     data = r.json()
     origins = data.get("origins", [])
     destinations = data.get("destinations", [])
-    for name in ("Zaragoza", "Calatayud", "Tafalla"):
+    # Zaragoza has several stations (Delicias, Goya, etc.) but no plain "Zaragoza"
+    assert any("Zaragoza" in name for name in origins), "Missing any Zaragoza station in origins"
+    assert any("Zaragoza" in name for name in destinations), "Missing any Zaragoza station in destinations"
+    for name in ("Calatayud", "Tafalla"):
         assert name in origins, f"Missing origin: {name}"
         assert name in destinations, f"Missing destination: {name}"
 
@@ -24,11 +27,12 @@ def test_search_returns_trains_when_backend_mocked(client: TestClient):
         {"name": "AVE 0101", "price": 45.50, "duration_minutes": 90, "estimated_price_min": None, "estimated_price_max": None},
     ]
     with patch("app.api.search._is_mock_enabled", return_value=False):
-        with patch("app.api.search._trains_from_gtfs_backend", return_value=mock_trains):
-            r = client.post(
-                "/api/search",
-                json={"date": "2025-06-15", "origin": "Madrid", "destination": "Zaragoza"},
-            )
+        with patch("app.api.search._is_possible_trains_enabled", return_value=False):
+            with patch("app.api.search._trains_from_gtfs_backend", return_value=mock_trains):
+                r = client.post(
+                    "/api/search",
+                    json={"date": "2025-06-15", "origin": "Madrid", "destination": "Zaragoza"},
+                )
     assert r.status_code == 200
     data = r.json()
     assert "trains" in data
@@ -40,11 +44,12 @@ def test_search_returns_trains_when_backend_mocked(client: TestClient):
 def test_search_returns_503_when_backend_fails(client: TestClient):
     """POST /api/search returns 503 when GTFS backend raises an exception."""
     with patch("app.api.search._is_mock_enabled", return_value=False):
-        with patch("app.api.search._trains_from_gtfs_backend", side_effect=Exception("No se pudo conectar con Renfe")):
-            r = client.post(
-                "/api/search",
-                json={"date": "2025-06-15", "origin": "Madrid", "destination": "Barcelona"},
-            )
+        with patch("app.api.search._is_possible_trains_enabled", return_value=False):
+            with patch("app.api.search._trains_from_gtfs_backend", side_effect=Exception("No se pudo conectar con Renfe")):
+                r = client.post(
+                    "/api/search",
+                    json={"date": "2025-06-15", "origin": "Madrid", "destination": "Barcelona"},
+                )
     assert r.status_code == 503
     assert "detail" in r.json()
     assert "Renfe" in r.json()["detail"]

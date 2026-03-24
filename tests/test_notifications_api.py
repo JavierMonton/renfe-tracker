@@ -93,11 +93,11 @@ def test_notifications_browser_crud(client: TestClient) -> None:
 
 
 def test_notifications_home_assistant_crud_and_masking(client: TestClient) -> None:
+    # HA URL and token are configured via env vars, not stored in DB.
+    # Only ha_notify_service is user-facing and stored.
     payload = {
         "type": "home_assistant",
         "label": "HA notifier",
-        "ha_url": "http://localhost:8123",
-        "ha_token": "super-secret-token",
         "ha_notify_service": "mobile_app_javier",
     }
 
@@ -111,9 +111,8 @@ def test_notifications_home_assistant_crud_and_masking(client: TestClient) -> No
 
     notif = next(n for n in notifications if n["id"] == notification_id)
     assert notif["type"] == "home_assistant"
-    assert notif["ha_url"] == "http://localhost:8123"
-    assert notif["notify_service"] == "mobile_app_javier"
-    assert notif["has_ha_token"] is True
+    assert notif["ha_notify_service"] == "mobile_app_javier"
+    assert "ha_url" not in notif
     assert "ha_token" not in notif
 
     removed = client.delete(f"/api/notifications/{notification_id}")
@@ -122,16 +121,12 @@ def test_notifications_home_assistant_crud_and_masking(client: TestClient) -> No
 
 
 def test_notifications_email_public_list_returns_masked_secret_indicators(client: TestClient) -> None:
+    # SMTP credentials are configured via env vars, not stored in DB.
+    # Only user-facing fields (email_to, email_subject) are stored and returned.
     payload = {
         "type": "email",
         "label": "Masked email",
-        "smtp_host": "smtp.example.com",
-        "smtp_port": 587,
-        "smtp_username": "user@example.com",
-        "smtp_password": "super-secret-password",
-        "smtp_use_starttls": True,
         "email_to": "to@example.com",
-        "email_from": "from@example.com",
         "email_subject": "Price change alert",
     }
 
@@ -144,9 +139,10 @@ def test_notifications_email_public_list_returns_masked_secret_indicators(client
     notifications = listed.json().get("notifications", [])
     notif = next(n for n in notifications if n["id"] == notification_id)
 
-    assert notif["smtp_username"] == "******"
-    assert notif["has_smtp_password"] is True
+    assert notif["email_to"] == "to@example.com"
+    assert notif["email_subject"] == "Price change alert"
     assert "smtp_password" not in notif
+    assert "smtp_username" not in notif
 
 
 def test_notifications_init_db_migrates_legacy_notification_columns(tmp_path: Path) -> None:
