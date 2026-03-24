@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from app.db.connection import get_connection
 from app.db import price_history as db_price_history
-from app.data.stations import RENFE_STATIONS
+from app.constants.stations import RENFE_STATIONS
 
 logger = logging.getLogger("renfe_tracker.search")
 

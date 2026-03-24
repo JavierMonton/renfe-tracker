@@ -39,17 +39,13 @@ The frontend is a React 19 + TypeScript single-page app served by the same proce
 ## Quick start
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/JavierMonton/renfe-tracker.git
-cd renfe-tracker
+# 1. Get the compose file
+curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml
 
-# 2. Copy the example compose file
-cp docker-compose.example.yml docker-compose.yml
+# 2. Start the app (image is pulled automatically from Docker Hub)
+docker compose up -d
 
-# 3. Start the app
-docker compose up --build -d
-
-# 4. Open http://localhost:8000
+# 3. Open http://localhost:8000
 ```
 
 See the [Installation](./installation) page for full details, including Docker run and local development options.

@@ -3,7 +3,7 @@ Helper script to generate a static list of Renfe stations that have
 both GTFS data (for schedules) and Renfe codes (for prices).
 
 Run this script manually to regenerate the station list constant used
-by the app (see app/data/stations.py).
+by the app (see app/constants/stations.py).
 """
 
 from __future__ import annotations

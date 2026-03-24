@@ -1,11 +1,11 @@
 # Renfe Tracker – example docker-compose with all options documented.
 # Copy to docker-compose.yml and fill in the values you need.
-# Run: docker compose up --build
+# Run: docker compose up -d
 # App: http://localhost:8000
 
 services:
   app:
-    build: .
+    image: jmonton/renfe-tracker:latest
     ports:
       - "${PORT:-8000}:8000"   # override port via .env: PORT=9000
     environment:

@@ -14,12 +14,16 @@ Renfe Tracker is distributed as a Docker image. The **recommended** way to run i
 
 Docker Compose is the simplest option for a permanent, always-on deployment. The compose file handles volume mounts, automatic restarts, and environment variable configuration in one place.
 
-### 1. Get the files
+### 1. Get the compose file
 
 ```bash
+# Option A – clone the repo (also gives you the example file)
 git clone https://github.com/JavierMonton/renfe-tracker.git
 cd renfe-tracker
 cp docker-compose.example.yml docker-compose.yml
+
+# Option B – download just the example file
+curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml
 ```
 
 ### 2. (Optional) Configure environment variables
@@ -29,7 +33,7 @@ Open `docker-compose.yml` and uncomment / fill in any options you need:
 ```yaml
 services:
   app:
-    build: .
+    image: jmonton/renfe-tracker:latest
     ports:
       - "${PORT:-8000}:8000"
     environment:
@@ -50,10 +54,10 @@ services:
     restart: unless-stopped
 ```
 
-### 3. Build and start
+### 3. Start
 
 ```bash
-docker compose up --build -d
+docker compose up -d
 ```
 
 Open **http://localhost:8000**. To use a different port, set `PORT` in a `.env` file or inline:
@@ -68,9 +72,9 @@ PORT=9000 docker compose up -d
 # Stop
 docker compose down
 
-# Pull latest code and rebuild
-git pull
-docker compose up --build -d
+# Pull the latest image and restart
+docker compose pull
+docker compose up -d
 ```
 
 Data in `./data` is never touched by these commands.
@@ -81,14 +85,6 @@ Data in `./data` is never touched by these commands.
 
 Use this if you prefer managing the container manually or want to integrate it into an existing setup.
 
-### Build the image
-
-```bash
-git clone https://github.com/JavierMonton/renfe-tracker.git
-cd renfe-tracker
-docker build -t renfe-tracker .
-```
-
 ### Run the container
 
 ```bash
@@ -97,7 +93,7 @@ docker run -d \
   --restart unless-stopped \
   -p 8000:8000 \
   -v "$(pwd)/data:/data" \
-  renfe-tracker
+  jmonton/renfe-tracker:latest
 ```
 
 With email and Home Assistant environment variables:
@@ -114,7 +110,15 @@ docker run -d \
   -e SMTP_PASSWORD=your-password \
   -e HA_URL=http://homeassistant.local:8123 \
   -e HA_TOKEN=your-ha-token \
-  renfe-tracker
+  jmonton/renfe-tracker:latest
+```
+
+To update to a newer version:
+
+```bash
+docker pull jmonton/renfe-tracker:latest
+docker rm -f renfe-tracker
+# re-run the docker run command above
 ```
 
 Open **http://localhost:8000**.

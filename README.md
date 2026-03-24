@@ -6,25 +6,20 @@ Track Renfe trains and prices (media/larga distancia). Self-hosted, runs in Dock
 
 ## Run with Docker
 
-### Building the image
+The image is published on Docker Hub as [`jmonton/renfe-tracker:latest`](https://hub.docker.com/r/jmonton/renfe-tracker) — no build step required.
 
-From the repo root:
-
-```bash
-docker build -t renfe-tracker .
-```
-
-The image exposes port **8000** and expects a **data volume** at `/data` (SQLite DB, GTFS data in `/data/renfe_schedule`). Mount it to persist data across restarts.
+It exposes port **8000** and expects a **data volume** at `/data` (SQLite DB, GTFS data in `/data/renfe_schedule`). Mount it to persist data across restarts.
 
 ### Running with compose (recommended for 24/7)
 
-Using the provided `compose.yaml`:
+Copy the example compose file and start:
 
 ```bash
-docker compose up --build -d
+cp docker-compose.example.yml docker-compose.yml
+docker compose up -d
 ```
 
-Then open **http://localhost:8000**. To change the host port, set `PORT` in a `.env` file (e.g. `PORT=8080`) or when running (for example, `PORT=8080 docker compose up -d`).
+Open **http://localhost:8000**. To change the host port, set `PORT` in a `.env` file (e.g. `PORT=8080`) or inline (e.g. `PORT=8080 docker compose up -d`).
 
 The compose file mounts `./data` to `/data` and uses `restart: unless-stopped` so the app restarts automatically after failures or reboots. You can replace `./data` with your own path (e.g. `/srv/renfe-tracker/data`) so the database and config stay on your host.
 
