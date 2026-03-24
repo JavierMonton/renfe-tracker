@@ -6,10 +6,15 @@ Track Renfe trains and prices (media/larga distancia). Self-hosted, runs in Dock
 
 **Documentation:** [https://JavierMonton.github.io/renfe-tracker/](https://JavierMonton.github.io/renfe-tracker/)
 
+Using this application, a user can search for Renfe trains, see possible trains not published, see estimated price ranges, 
+and track trips to get notified of price changes.
+
+
 ---
 
 ## Table of Contents
 
+- [Features](#features)
 - [Run with Docker](#run-with-docker)
   - [Running with compose (recommended for 24/7)](#running-with-compose-recommended-for-247)
 - [Configuration](#configuration)
@@ -17,6 +22,21 @@ Track Renfe trains and prices (media/larga distancia). Self-hosted, runs in Dock
 - [Local development and tests](#local-development-and-tests)
 
 ---
+
+## Features
+
+- See Price Ranges and Possible Trains: 
+When searching for trains, the app shows estimated price ranges based on historical data and highlights possible trains that may not be published yet.
+
+![img.png](./website/static/img/search-screenshot.png)
+- Track multiple trips:
+
+![img_1.png](./website/static/img/trips-screenshot.png)
+- See historical price changes:
+
+![img_2.png](./website/static/img/prices-screenshot.png)
+
+
 
 ## Run with Docker
 
