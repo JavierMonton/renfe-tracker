@@ -4,7 +4,9 @@
 
 Track Renfe trains and prices (media/larga distancia). Self-hosted, runs in Docker.
 
-**Documentation:** [https://JavierMonton.github.io/renfe-tracker/](https://JavierMonton.github.io/renfe-tracker/)
+Features, installation, and configuration, 
+explained in the [**Documentation website**](https://JavierMonton.github.io/renfe-tracker/).
+
 
 Using this application, a user can search for Renfe trains, see possible trains not published, see estimated price ranges, 
 and track trips to get notified of price changes.
@@ -18,8 +20,6 @@ and track trips to get notified of price changes.
 - [Run with Docker](#run-with-docker)
   - [Running with compose (recommended for 24/7)](#running-with-compose-recommended-for-247)
 - [Configuration](#configuration)
-- [Data persistence](#data-persistence)
-- [Local development and tests](#local-development-and-tests)
 
 ---
 
@@ -64,42 +64,4 @@ To test search **without** any real Renfe calls, set `RENFE_MOCK=1` (or `RENFE_U
 
 ## Configuration
 
-The application behavior can be tuned via environment variables (for Docker, set them in your `.env` or `docker compose` file).
-
-- **`RENFE_REFERENCE_WEEKS`**: number of same-weekday **reference weeks** used to estimate price ranges and infer possible trains.
-  - **Usage**: affects both the **initial search** (when showing estimated price ranges and “possible trains”) and the **scheduler** (when it learns prices for tracked trips on other weeks).
-  - **Default**: `10` (if not set or invalid).
-  - **Allowed values**:
-    - `0` – disable extra weeks (only uses the requested date).
-    - `N >= 1` – use up to `N` same-weekday weeks (e.g. `RENFE_REFERENCE_WEEKS=10`).
-
-- **`RENFE_PRICE_HISTORY_DAYS`**: number of days to keep **global price history** used to improve future searches.
-  - **Usage**: affects how long historical prices are kept for `(origin, destination, weekday, train, departure_time)` combinations, which are then used to refine estimated ranges on new searches and new tracked trips.
-  - **Default**: `365` days (if not set or invalid).
-  - **Allowed values**:
-    - `0` – aggressively clean up everything older than “now” on the next maintenance run.
-    - `N >= 1` – keep history for `N` days; older entries are deleted by the daily maintenance job.
-
-More configuration options will be added here as they are introduced.
-
-## Data persistence
-
-The SQLite database and any app data are stored on the host in **`./data`**, which is mounted into the container at `/data` by `compose.yaml`. The DB file is `./data/renfe_tracker.db`. Renfe GTFS schedule data (used by the integrated backend) is stored in `./data/renfe_schedule` and is also persisted. Data survives container restarts and rebuilds; the service is configured with `restart: unless-stopped` so it will come back up automatically after failures or host reboots.
-
-The entrypoint creates `/data` and the DB file if missing; the app runs as root so it can always write. You usually don’t need to fix permissions. If you want the data dir on the host owned by your user, run on the host after first start: `chown -R $(id -u):$(id -g) ./data` (or set PUID/PGID so the entrypoint chowns when possible).
-
-## Local development and tests
-
-This project uses **[uv](https://github.com/astral-sh/uv)** for dependencies and runs.
-
-From the repo root:
-
-```bash
-uv sync
-uv run pytest
-```
-
-- **`uv sync`** – creates `.venv` (if needed), installs the project and dependencies from `pyproject.toml` / `uv.lock`.
-- **`uv run pytest`** – runs tests in the project env (no Docker, no real Renfe calls; Renfe is mocked).
-
-Verbose tests: `uv run pytest -v`. Run the app locally: `uv run uvicorn app.main:app --reload`.
+For configuration options, refer to the [documentation website](https://javiermonton.github.io/renfe-tracker/configuration).
