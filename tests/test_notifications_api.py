@@ -18,7 +18,7 @@ def test_build_price_change_summary_format() -> None:
         old_price=10.0,
         new_price=12.5,
     )
-    assert summary == "Trip - Madrid -> Zaragoza, 09:30, changed price from 10.00 to 12.50"
+    assert summary == "Price changed: Madrid → Zaragoza, dep. 09:30. Price: €10.00 → €12.50"
 
 
 def test_build_price_change_summary_old_price_unknown() -> None:
@@ -29,7 +29,7 @@ def test_build_price_change_summary_old_price_unknown() -> None:
         old_price=None,
         new_price=12.5,
     )
-    assert summary == "Trip - Madrid -> Zaragoza, N/A, changed price from N/A to 12.50"
+    assert summary == "Price changed: Madrid → Zaragoza, dep. N/A. Price: N/A → €12.50"
 
 
 def test_notifications_email_crud(client: TestClient) -> None:
