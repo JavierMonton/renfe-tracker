@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Train body -->
+  <rect x="30" y="70" width="140" height="80" rx="16" fill="#c0392b"/>
+  <!-- Windows -->
+  <rect x="50" y="85" width="30" height="25" rx="5" fill="white" opacity="0.9"/>
+  <rect x="90" y="85" width="30" height="25" rx="5" fill="white" opacity="0.9"/>
+  <rect x="130" y="85" width="25" height="25" rx="5" fill="white" opacity="0.9"/>
+  <!-- Wheels -->
+  <circle cx="65" cy="155" r="14" fill="#333"/>
+  <circle cx="65" cy="155" r="7" fill="#c0392b"/>
+  <circle cx="135" cy="155" r="14" fill="#333"/>
+  <circle cx="135" cy="155" r="7" fill="#c0392b"/>
+  <!-- Track -->
+  <rect x="10" y="166" width="180" height="5" rx="2" fill="#888"/>
+  <!-- Price tag -->
+  <circle cx="155" cy="55" r="28" fill="#8e44ad"/>
+  <text x="155" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="white">€</text>
+</svg>
