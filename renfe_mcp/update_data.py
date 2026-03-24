@@ -7,7 +7,6 @@ Security: Implements safe ZIP extraction to prevent Zip Slip attacks.
 import os
 import shutil
 import zipfile
-from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -236,7 +235,7 @@ def download_and_extract(download_url, last_modified):
         # Save metadata
         save_metadata(last_modified)
 
-        print(f"[OK] GTFS data updated successfully!")
+        print("[OK] GTFS data updated successfully!")
         print(f"     Version: {last_modified}")
 
         # List extracted files
@@ -247,7 +246,7 @@ def download_and_extract(download_url, last_modified):
         return True
 
     except requests.Timeout:
-        print(f"[ERROR] Download timed out. Please try again later.")
+        print("[ERROR] Download timed out. Please try again later.")
         return False
     except requests.RequestException as e:
         print(f"[ERROR] Network error during download: {e}")
@@ -267,7 +266,7 @@ def needs_update():
 
     local_modified = get_local_last_modified()
 
-    print(f"[CHECK] Checking data versions:")
+    print("[CHECK] Checking data versions:")
     print(f"        Server: {server_modified}")
     print(f"        Local:  {local_modified or 'Not found'}")
 

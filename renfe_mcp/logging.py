@@ -157,7 +157,7 @@ def log_function_call(logger: Optional[logging.Logger] = None):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # Generate correlation ID if not set
-            cid = get_correlation_id()
+            cid = get_correlation_id()  # noqa: F841
 
             # Log entry
             func_name = func.__qualname__

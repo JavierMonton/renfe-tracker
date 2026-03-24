@@ -27,3 +27,15 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app", "renfe_mcp"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.7",
+]
+
+[tool.ruff]
+exclude = [".venv"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/main.py" = ["E402"]       # imports intentionally after logging/env setup
+"tests/conftest.py" = ["E402"] # DATA_DIR must be set before app import

@@ -6,7 +6,6 @@ Security: Implements secure HTTP client configuration to prevent SSRF and other 
 
 import json
 import logging
-import os
 import re
 import time
 from datetime import datetime
@@ -491,7 +490,7 @@ class RenfeScraper:
 
         try:
             data = json5.loads(json_str)
-            logger.debug(f"Parsed train list JSON successfully")
+            logger.debug("Parsed train list JSON successfully")
             return data
         except Exception as e:
             logger.error(f"JSON parsing error: {e}", exc_info=True)
@@ -544,7 +543,7 @@ class RenfeScraper:
 
                     trains.append(train)
 
-                except Exception as e:
+                except Exception:
                     # Skip invalid trains but continue parsing
                     continue
 

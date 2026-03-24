@@ -3,7 +3,7 @@
 import random
 import string
 from datetime import datetime
-from typing import Generator, Iterator, Optional
+from typing import Iterator, Optional
 
 
 def get_batch_id_generator() -> Iterator[int]:

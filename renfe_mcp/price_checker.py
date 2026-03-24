@@ -135,7 +135,7 @@ def format_price_results(results: List[Dict[str, Any]], origin: str, destination
     if not results:
         return f"No trains found from {origin} to {destination} on {date}."
 
-    output = f"PRICE CHECK RESULTS\n"
+    output = "PRICE CHECK RESULTS\n"
     output += f"From: {origin} -> {destination}\n"
     output += f"Date: {date}\n"
     output += f"Showing {len(results)} train(s)\n\n"
