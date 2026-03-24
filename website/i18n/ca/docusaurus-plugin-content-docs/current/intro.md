@@ -47,7 +47,7 @@ cd renfe-tracker
 cp docker-compose.example.yml docker-compose.yml
 
 # 3. Inicia l'aplicació
-docker compose up --build -d
+docker compose up -d
 
 # 4. Obre http://localhost:8000
 ```

@@ -53,7 +53,7 @@ services:
 ### 3. Construir i iniciar
 
 ```bash
-docker compose up --build -d
+docker compose up -d
 ```
 
 Obre **http://localhost:8000**. Per usar un port diferent, estableix `PORT` en un fitxer `.env` o directament:
@@ -69,8 +69,8 @@ PORT=9000 docker compose up -d
 docker compose down
 
 # Obtenir el darrer codi i reconstruir
-git pull
-docker compose up --build -d
+docker compose pull
+docker compose up -d
 ```
 
 Les dades a `./data` mai es modifiquen amb aquestes ordres.
