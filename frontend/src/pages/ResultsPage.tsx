@@ -39,8 +39,6 @@ export function ResultsPage() {
   const [error, setError] = useState<string | null>(null)
 
   const trackIntervalOptions = useMemo(() => [
-    { value: 1, label: t('common.checkEveryMin', { n: 1 }) },
-    { value: 5, label: t('common.checkEveryMin', { n: 5 }) },
     { value: 10, label: t('common.checkEveryMin', { n: 10 }) },
     { value: 30, label: t('common.checkEveryMin', { n: 30 }) },
     { value: 60, label: t('common.checkEveryHour', { n: 1 }) },
