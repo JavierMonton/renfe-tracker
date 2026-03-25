@@ -207,6 +207,62 @@ def _build_email_html(
 </html>"""
 
 
+def _build_telegram_html(
+    *,
+    origin: str,
+    destination: str,
+    departure_time: Optional[str],
+    old_price: Optional[float],
+    new_price: float,
+    direction: Optional[str],
+    trip_date: Optional[str],
+    train_identifier: Optional[str],
+    lang: str = "en",
+) -> str:
+    """Build an HTML message for Telegram using its supported subset (<b>, <i>, <s>, <code>)."""
+
+    def _fmt(p: Optional[float]) -> str:
+        return "N/A" if p is None else f"€{p:.2f}"
+
+    # Direction heading
+    if direction == "down":
+        heading = t(lang, "emailNotif.badgeDown")
+    elif direction == "up":
+        heading = t(lang, "emailNotif.badgeUp")
+    else:
+        heading = t(lang, "emailNotif.badgeChanged")
+
+    # Route line
+    route = f"<b>{origin}</b> → <b>{destination}</b>"
+
+    # Meta line: date | departure | train
+    meta_parts: list[str] = []
+    if trip_date:
+        meta_parts.append(trip_date)
+    dep = departure_time.strip() if departure_time else None
+    if dep:
+        meta_parts.append(dep)
+    if train_identifier:
+        meta_parts.append(train_identifier)
+    meta_line = " | ".join(meta_parts) if meta_parts else ""
+
+    # Price line
+    if old_price is not None:
+        diff = new_price - old_price
+        diff_sign = "+" if diff >= 0 else "−"
+        price_line = f"<s>{_fmt(old_price)}</s> → <b>{_fmt(new_price)}</b> ({diff_sign}€{abs(diff):.2f})"
+    else:
+        price_line = f"<b>{_fmt(new_price)}</b>"
+
+    # Assemble
+    lines = [f"<b>{heading}</b>", "", route]
+    if meta_line:
+        lines.append(meta_line)
+    lines.append("")
+    lines.append(price_line)
+    return "\n".join(lines)
+
+
 async def dispatch_price_change_notifications(
     conn,
     *,

@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.db.schema import init_db
-from app.services.notifications import build_price_change_summary
+from app.services.notifications import build_price_change_summary, _build_telegram_html
 
 
 def test_build_price_change_summary_format() -> None:
@@ -218,4 +218,57 @@ def test_notifications_init_db_migrates_legacy_notification_columns(tmp_path: Pa
     assert "webpush_vapid_subject" in columns
     assert "webpush_vapid_public_key" in columns
     assert "webpush_vapid_private_key" in columns
+
+
+def test_build_telegram_html_price_down() -> None:
+    html = _build_telegram_html(
+        origin="Madrid",
+        destination="Barcelona",
+        departure_time="08:30",
+        old_price=45.00,
+        new_price=38.00,
+        direction="down",
+        trip_date="2026-03-25",
+        train_identifier="AVE 1234",
+        lang="en",
+    )
+    assert "<b>" in html
+    assert "Madrid" in html
+    assert "Barcelona" in html
+    assert "38.00" in html
+    assert "45.00" in html
+    assert "7.00" in html  # diff
+
+
+def test_build_telegram_html_price_up() -> None:
+    html = _build_telegram_html(
+        origin="Madrid",
+        destination="Sevilla",
+        departure_time="10:00",
+        old_price=30.00,
+        new_price=35.50,
+        direction="up",
+        trip_date="2026-04-01",
+        train_identifier="AVE 5678",
+        lang="en",
+    )
+    assert "35.50" in html
+    assert "30.00" in html
+    assert "5.50" in html  # diff
+
+
+def test_build_telegram_html_no_old_price() -> None:
+    html = _build_telegram_html(
+        origin="Madrid",
+        destination="Valencia",
+        departure_time="14:00",
+        old_price=None,
+        new_price=25.00,
+        direction=None,
+        trip_date=None,
+        train_identifier=None,
+        lang="en",
+    )
+    assert "25.00" in html
+    assert "<s>" not in html  # no strikethrough when no old price
 
