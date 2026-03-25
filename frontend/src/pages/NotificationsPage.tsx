@@ -22,6 +22,13 @@ function NotificationIcon({ type }: { type: NotificationListItem['type'] }) {
       </svg>
     )
   }
+  if (type === 'telegram') {
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 shrink-0">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+      </svg>
+    )
+  }
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 shrink-0">
       <path fillRule="evenodd" d="M2.25 5.25a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3V15a3 3 0 0 1-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 0 1-.53 1.28h-7.5a.75.75 0 0 1-.53-1.28l.621-.622a2.25 2.25 0 0 0 .659-1.59V18h-3a3 3 0 0 1-3-3V5.25Zm1.5 0v9.75c0 .828.672 1.5 1.5 1.5h13.5c.828 0 1.5-.672 1.5-1.5V5.25c0-.828-.672-1.5-1.5-1.5H5.25c-.828 0-1.5.672-1.5 1.5Z" clipRule="evenodd" />
@@ -34,6 +41,7 @@ function notificationTitle(t: TFunction, n: NotificationListItem): string {
     case 'email': return t('notifications.emailType')
     case 'home_assistant': return t('notifications.haType')
     case 'browser': return t('notifications.browserType')
+    case 'telegram': return t('notifications.telegramType')
   }
 }
 
@@ -46,6 +54,9 @@ function notificationSubtitle(t: TFunction, n: NotificationListItem): string {
   if (n.type === 'home_assistant') {
     const service = n.ha_notify_service ?? ''
     return `notify.${service}`
+  }
+  if (n.type === 'telegram') {
+    return t('notifications.telegramSubtitle')
   }
   return t('notifications.browserSubtitle')
 }
@@ -78,6 +89,7 @@ export function NotificationsPage() {
 
   const hasEmail = notifications?.some((n) => n.type === 'email') ?? false
   const hasHa = notifications?.some((n) => n.type === 'home_assistant') ?? false
+  const hasTelegram = notifications?.some((n) => n.type === 'telegram') ?? false
 
   return (
     <div className="space-y-4">
@@ -94,7 +106,7 @@ export function NotificationsPage() {
         </Link>
       </div>
 
-      {configStatus && (hasEmail || hasHa) ? (
+      {configStatus && (hasEmail || hasHa || hasTelegram) ? (
         <div className="space-y-2">
           {hasEmail && !configStatus.email_configured ? (
             <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">
@@ -104,6 +116,11 @@ export function NotificationsPage() {
           {hasHa && !configStatus.ha_configured ? (
             <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">
               {t('notifications.haMissingConfig')}
+            </div>
+          ) : null}
+          {hasTelegram && !configStatus.telegram_configured ? (
+            <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 ring-1 ring-amber-200">
+              {t('notifications.telegramMissingConfig')}
             </div>
           ) : null}
         </div>
