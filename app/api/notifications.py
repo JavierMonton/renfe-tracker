@@ -23,7 +23,7 @@ logger = logging.getLogger("renfe_tracker.notifications.api")
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
-NotificationType = Literal["email", "home_assistant", "browser"]
+NotificationType = Literal["email", "home_assistant", "browser", "telegram"]
 
 
 class CreateNotificationBody(BaseModel):

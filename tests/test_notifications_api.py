@@ -145,6 +145,29 @@ def test_notifications_email_public_list_returns_masked_secret_indicators(client
     assert "smtp_username" not in notif
 
 
+def test_notifications_telegram_crud(client: TestClient) -> None:
+    payload = {
+        "type": "telegram",
+        "label": "My Telegram",
+    }
+
+    r = client.post("/api/notifications", json=payload)
+    assert r.status_code == 200
+    notification_id = r.json()["notification_id"]
+
+    r2 = client.get("/api/notifications")
+    assert r2.status_code == 200
+    notifications = r2.json().get("notifications", [])
+
+    notif = next(n for n in notifications if n["id"] == notification_id)
+    assert notif["type"] == "telegram"
+    assert notif["label"] == "My Telegram"
+
+    r3 = client.delete(f"/api/notifications/{notification_id}")
+    assert r3.status_code == 200
+    assert r3.json()["deleted"] is True
+
+
 def test_notifications_init_db_migrates_legacy_notification_columns(tmp_path: Path) -> None:
     db_path = tmp_path / "legacy_notifications.sqlite"
 
