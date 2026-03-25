@@ -4,7 +4,8 @@
 FROM node:20-slim AS frontend-build
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm/ \
+    npm ci
 COPY frontend/ ./
 RUN npm run build
 
@@ -35,8 +36,7 @@ COPY --from=frontend-build /frontend/dist/ app/static/
 # Default run user is 1000:1000; override at runtime with PUID/PGID. No named user needed (entrypoint uses gosu with numeric id).
 RUN chown -R 1000:1000 /app
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 
 ENV HOME=/app
 ENV DATA_DIR=/data
