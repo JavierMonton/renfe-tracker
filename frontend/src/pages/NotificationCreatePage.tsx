@@ -8,6 +8,7 @@ import type {
   CreateBrowserNotificationBody,
   CreateEmailNotificationBody,
   CreateHomeAssistantNotificationBody,
+  CreateTelegramNotificationBody,
   NotificationConfigStatus,
   NotificationType,
 } from '../api/types'
@@ -138,6 +139,19 @@ export function NotificationCreatePage() {
         setSavedOpen(true)
         return
       }
+
+      if (type === 'telegram') {
+        const telegramBody: CreateTelegramNotificationBody = {
+          type: 'telegram',
+          label: trimmedLabel,
+          language: i18n.language,
+        }
+
+        await createNotification(telegramBody)
+        setSavedSummary(t('notificationCreate.savedTelegramSummary'))
+        setSavedOpen(true)
+        return
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t('notificationCreate.errorCouldNotSave'))
     } finally {
@@ -193,13 +207,15 @@ export function NotificationCreatePage() {
         <form onSubmit={onSubmit} className="space-y-5">
           <fieldset>
             <legend className="text-sm font-semibold text-gray-900">{t('notificationCreate.notificationType')}</legend>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {(['email', 'home_assistant', 'browser'] as NotificationType[]).map((tp) => {
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
+              {(['email', 'home_assistant', 'browser', 'telegram'] as NotificationType[]).map((tp) => {
                 const labelText =
                   tp === 'email'
                     ? t('notificationCreate.emailType')
                     : tp === 'home_assistant'
                     ? t('notificationCreate.haType')
+                    : tp === 'telegram'
+                    ? t('notificationCreate.telegramType')
                     : t('notificationCreate.browserType')
                 return (
                   <label
@@ -328,6 +344,19 @@ export function NotificationCreatePage() {
                   {t('notificationCreate.browserStatus', { status: browserEnabledLabel })}
                 </p>
               </div>
+            </div>
+          ) : null}
+
+          {type === 'telegram' ? (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900">{t('notificationCreate.telegramConfig')}</h3>
+
+              <ConfigBanner
+                configured={configStatus?.telegram_configured ?? null}
+                vars="TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID"
+              />
+
+              <p className="text-sm text-gray-500">{t('notificationCreate.telegramNote')}</p>
             </div>
           ) : null}
 
