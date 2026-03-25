@@ -3,11 +3,17 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 from pathlib import Path
+from unittest.mock import AsyncMock, patch, MagicMock
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.db.schema import init_db
-from app.services.notifications import build_price_change_summary
+from app.services.notifications import (
+    build_price_change_summary,
+    _build_telegram_html,
+    _send_telegram_notification,
+)
 
 
 def test_build_price_change_summary_format() -> None:
@@ -145,6 +151,38 @@ def test_notifications_email_public_list_returns_masked_secret_indicators(client
     assert "smtp_username" not in notif
 
 
+def test_notifications_telegram_crud(client: TestClient) -> None:
+    payload = {
+        "type": "telegram",
+        "label": "My Telegram",
+    }
+
+    r = client.post("/api/notifications", json=payload)
+    assert r.status_code == 200
+    notification_id = r.json()["notification_id"]
+
+    r2 = client.get("/api/notifications")
+    assert r2.status_code == 200
+    notifications = r2.json().get("notifications", [])
+
+    notif = next(n for n in notifications if n["id"] == notification_id)
+    assert notif["type"] == "telegram"
+    assert notif["label"] == "My Telegram"
+
+    r3 = client.delete(f"/api/notifications/{notification_id}")
+    assert r3.status_code == 200
+    assert r3.json()["deleted"] is True
+
+
+def test_config_status_includes_telegram(client: TestClient) -> None:
+    r = client.get("/api/notifications/config-status")
+    assert r.status_code == 200
+    data = r.json()
+    assert "telegram_configured" in data
+    # Env vars not set in test → False
+    assert data["telegram_configured"] is False
+
+
 def test_notifications_init_db_migrates_legacy_notification_columns(tmp_path: Path) -> None:
     db_path = tmp_path / "legacy_notifications.sqlite"
 
@@ -186,4 +224,150 @@ def test_notifications_init_db_migrates_legacy_notification_columns(tmp_path: Pa
     assert "webpush_vapid_subject" in columns
     assert "webpush_vapid_public_key" in columns
     assert "webpush_vapid_private_key" in columns
+
+
+def test_build_telegram_html_price_down() -> None:
+    html = _build_telegram_html(
+        origin="Madrid",
+        destination="Barcelona",
+        departure_time="08:30",
+        old_price=45.00,
+        new_price=38.00,
+        direction="down",
+        trip_date="2026-03-25",
+        train_identifier="AVE 1234",
+        lang="en",
+    )
+    assert "<b>" in html
+    assert "Madrid" in html
+    assert "Barcelona" in html
+    assert "38.00" in html
+    assert "45.00" in html
+    assert "7.00" in html  # diff
+
+
+def test_build_telegram_html_price_up() -> None:
+    html = _build_telegram_html(
+        origin="Madrid",
+        destination="Sevilla",
+        departure_time="10:00",
+        old_price=30.00,
+        new_price=35.50,
+        direction="up",
+        trip_date="2026-04-01",
+        train_identifier="AVE 5678",
+        lang="en",
+    )
+    assert "35.50" in html
+    assert "30.00" in html
+    assert "5.50" in html  # diff
+
+
+def test_build_telegram_html_no_old_price() -> None:
+    html = _build_telegram_html(
+        origin="Madrid",
+        destination="Valencia",
+        departure_time="14:00",
+        old_price=None,
+        new_price=25.00,
+        direction=None,
+        trip_date=None,
+        train_identifier=None,
+        lang="en",
+    )
+    assert "25.00" in html
+    assert "<s>" not in html  # no strikethrough when no old price
+
+
+def test_send_telegram_notification_success() -> None:
+    """Verify Telegram API is called with correct payload."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"ok": True}
+
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+    mock_client_instance.__aexit__ = AsyncMock(return_value=False)
+
+    with patch("app.services.notifications.config") as mock_config, \
+         patch("app.services.notifications.httpx.AsyncClient", return_value=mock_client_instance):
+        mock_config.TELEGRAM_BOT_TOKEN = "123:ABC"
+        mock_config.TELEGRAM_CHAT_ID = "456"
+
+        asyncio.run(_send_telegram_notification(
+            {"id": 1, "type": "telegram", "language": "en"},
+            "Price changed summary",
+            origin="Madrid",
+            destination="Barcelona",
+            departure_time="08:30",
+            old_price=45.0,
+            new_price=38.0,
+            direction="down",
+            trip_date="2026-03-25",
+            train_identifier="AVE 1234",
+            lang="en",
+        ))
+
+        mock_client_instance.post.assert_called_once()
+        call_args = mock_client_instance.post.call_args
+        assert call_args[0][0] == "https://api.telegram.org/bot123:ABC/sendMessage"
+        payload = call_args[1]["json"]
+        assert payload["chat_id"] == "456"
+        assert payload["parse_mode"] == "HTML"
+        assert "Madrid" in payload["text"]
+
+
+def test_send_telegram_notification_skips_when_not_configured() -> None:
+    """Verify Telegram notification is skipped when env vars are missing."""
+    with patch("app.services.notifications.config") as mock_config:
+        mock_config.TELEGRAM_BOT_TOKEN = None
+        mock_config.TELEGRAM_CHAT_ID = None
+
+        # Should not raise — just log and return
+        asyncio.run(_send_telegram_notification(
+            {"id": 1, "type": "telegram", "language": "en"},
+            "Price changed summary",
+            origin="Madrid",
+            destination="Barcelona",
+            departure_time="08:30",
+            old_price=45.0,
+            new_price=38.0,
+            direction="down",
+            trip_date="2026-03-25",
+            train_identifier="AVE 1234",
+            lang="en",
+        ))
+
+
+def test_send_telegram_notification_handles_api_error() -> None:
+    """Verify RuntimeError is raised when Telegram API returns ok: false."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"ok": False, "description": "Bad Request"}
+
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+    mock_client_instance.__aexit__ = AsyncMock(return_value=False)
+
+    with patch("app.services.notifications.config") as mock_config, \
+         patch("app.services.notifications.httpx.AsyncClient", return_value=mock_client_instance):
+        mock_config.TELEGRAM_BOT_TOKEN = "123:ABC"
+        mock_config.TELEGRAM_CHAT_ID = "456"
+
+        with pytest.raises(RuntimeError, match="Telegram"):
+            asyncio.run(_send_telegram_notification(
+                {"id": 1, "type": "telegram", "language": "en"},
+                "Price changed summary",
+                origin="Madrid",
+                destination="Barcelona",
+                departure_time="08:30",
+                old_price=45.0,
+                new_price=38.0,
+                direction="down",
+                trip_date="2026-03-25",
+                train_identifier="AVE 1234",
+                lang="en",
+            ))
 

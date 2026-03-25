@@ -207,6 +207,122 @@ def _build_email_html(
 </html>"""
 
 
+def _build_telegram_html(
+    *,
+    origin: str,
+    destination: str,
+    departure_time: Optional[str],
+    old_price: Optional[float],
+    new_price: float,
+    direction: Optional[str],
+    trip_date: Optional[str],
+    train_identifier: Optional[str],
+    lang: str = "en",
+) -> str:
+    """Build an HTML message for Telegram using its supported subset (<b>, <i>, <s>, <code>)."""
+
+    def _fmt(p: Optional[float]) -> str:
+        return "N/A" if p is None else f"€{p:.2f}"
+
+    # Direction heading
+    if direction == "down":
+        heading = t(lang, "emailNotif.badgeDown")
+    elif direction == "up":
+        heading = t(lang, "emailNotif.badgeUp")
+    else:
+        heading = t(lang, "emailNotif.badgeChanged")
+
+    # Route line
+    route = f"<b>{origin}</b> → <b>{destination}</b>"
+
+    # Meta line: date | departure | train
+    meta_parts: list[str] = []
+    if trip_date:
+        meta_parts.append(trip_date)
+    dep = departure_time.strip() if departure_time else None
+    if dep:
+        meta_parts.append(dep)
+    if train_identifier:
+        meta_parts.append(train_identifier)
+    meta_line = " | ".join(meta_parts) if meta_parts else ""
+
+    # Price line
+    if old_price is not None:
+        diff = new_price - old_price
+        diff_sign = "+" if diff >= 0 else "−"
+        price_line = f"<s>{_fmt(old_price)}</s> → <b>{_fmt(new_price)}</b> ({diff_sign}€{abs(diff):.2f})"
+    else:
+        price_line = f"<b>{_fmt(new_price)}</b>"
+
+    # Assemble
+    lines = [f"<b>{heading}</b>", "", route]
+    if meta_line:
+        lines.append(meta_line)
+    lines.append("")
+    lines.append(price_line)
+    return "\n".join(lines)
+
+
+async def _send_telegram_notification(
+    n: dict,
+    summary: str,
+    *,
+    origin: str,
+    destination: str,
+    departure_time: Optional[str],
+    old_price: Optional[float],
+    new_price: float,
+    direction: Optional[str],
+    trip_date: Optional[str],
+    train_identifier: Optional[str],
+    lang: str = "en",
+) -> None:
+    bot_token = config.TELEGRAM_BOT_TOKEN
+    chat_id = config.TELEGRAM_CHAT_ID
+
+    if not bot_token or not chat_id:
+        logger.warning(
+            "Telegram notification skipped: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not configured "
+            "(notification_id=%s). Set these environment variables to enable Telegram alerts.",
+            n.get("id"),
+        )
+        return
+
+    parse_mode = "HTML"
+    try:
+        text = _build_telegram_html(
+            origin=origin,
+            destination=destination,
+            departure_time=departure_time,
+            old_price=old_price,
+            new_price=new_price,
+            direction=direction,
+            trip_date=trip_date,
+            train_identifier=train_identifier,
+            lang=lang,
+        )
+    except Exception:
+        logger.warning("Telegram HTML build failed, falling back to plain text", exc_info=True)
+        text = summary
+        parse_mode = None
+
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload: dict = {
+        "chat_id": chat_id,
+        "text": text,
+    }
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.post(url, json=payload)
+        if resp.status_code >= 400:
+            raise RuntimeError(f"Telegram API failed with status={resp.status_code}")
+        data = resp.json()
+        if not data.get("ok"):
+            raise RuntimeError(f"Telegram API error: {data.get('description', 'unknown')}")
+
+
 async def dispatch_price_change_notifications(
     conn,
     *,
@@ -260,6 +376,20 @@ async def dispatch_price_change_notifications(
                 )
             elif ntype == "home_assistant":
                 await _send_home_assistant_notification(n, summary)
+            elif ntype == "telegram":
+                await _send_telegram_notification(
+                    n,
+                    summary,
+                    origin=origin,
+                    destination=destination,
+                    departure_time=departure_time,
+                    old_price=old_price,
+                    new_price=new_price,
+                    direction=direction,
+                    trip_date=trip_date,
+                    train_identifier=train_identifier,
+                    lang=lang,
+                )
             else:
                 # browser is client-side; ignore here.
                 continue

@@ -13,7 +13,7 @@ import aiosqlite
 
 logger = logging.getLogger("renfe_tracker.notifications.db")
 
-NOTIFICATION_TYPES = ("email", "home_assistant", "browser")
+NOTIFICATION_TYPES = ("email", "home_assistant", "browser", "telegram")
 
 
 async def create_notification(
@@ -77,7 +77,7 @@ async def list_notifications_for_dispatch(conn: aiosqlite.Connection) -> list[di
         """
         SELECT id, type, label, language, email_to, email_subject, ha_notify_service
         FROM notifications
-        WHERE type IN ('email', 'home_assistant')
+        WHERE type IN ('email', 'home_assistant', 'telegram')
         ORDER BY created_at DESC
         """,
     )

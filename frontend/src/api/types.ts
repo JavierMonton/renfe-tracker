@@ -78,7 +78,7 @@ export interface SearchResponse {
   trains: TrainResult[]
 }
 
-export type NotificationType = 'email' | 'home_assistant' | 'browser'
+export type NotificationType = 'email' | 'home_assistant' | 'browser' | 'telegram'
 
 export interface NotificationListItemBase {
   id: number
@@ -102,10 +102,15 @@ export interface BrowserNotificationListItem extends NotificationListItemBase {
   type: 'browser'
 }
 
+export interface TelegramNotificationListItem extends NotificationListItemBase {
+  type: 'telegram'
+}
+
 export type NotificationListItem =
   | EmailNotificationListItem
   | HomeAssistantNotificationListItem
   | BrowserNotificationListItem
+  | TelegramNotificationListItem
 
 export interface ListNotificationsResponse {
   notifications: NotificationListItem[]
@@ -115,6 +120,7 @@ export interface ListNotificationsResponse {
 export interface NotificationConfigStatus {
   email_configured: boolean
   ha_configured: boolean
+  telegram_configured: boolean
 }
 
 export interface CreateEmailNotificationBody {
@@ -138,10 +144,17 @@ export interface CreateBrowserNotificationBody {
   language?: string
 }
 
+export interface CreateTelegramNotificationBody {
+  type: 'telegram'
+  label?: string | null
+  language?: string
+}
+
 export type CreateNotificationBody =
   | CreateEmailNotificationBody
   | CreateHomeAssistantNotificationBody
   | CreateBrowserNotificationBody
+  | CreateTelegramNotificationBody
 
 export interface CreateNotificationResponse {
   notification_id: number

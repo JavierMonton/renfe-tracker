@@ -35,3 +35,15 @@ def email_configured() -> bool:
 def ha_configured() -> bool:
     """Return True when the minimum Home Assistant env vars are present."""
     return bool(HA_URL and HA_TOKEN)
+
+
+# ---------------------------------------------------------------------------
+# Telegram
+# ---------------------------------------------------------------------------
+TELEGRAM_BOT_TOKEN: str | None = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID: str | None = os.getenv("TELEGRAM_CHAT_ID")
+
+
+def telegram_configured() -> bool:
+    """Return True when the minimum Telegram env vars are present."""
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
