@@ -53,6 +53,7 @@ class CreateNotificationBody(BaseModel):
         elif self.type == "home_assistant":
             if not self.ha_notify_service:
                 raise ValueError("ha_notify_service is required for Home Assistant notifications")
+        # telegram and browser have no required type-specific fields
         return self
 
 
@@ -62,6 +63,7 @@ async def get_config_status():
     return {
         "email_configured": app_config.email_configured(),
         "ha_configured": app_config.ha_configured(),
+        "telegram_configured": app_config.telegram_configured(),
     }
 
 

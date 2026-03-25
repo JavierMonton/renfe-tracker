@@ -168,6 +168,15 @@ def test_notifications_telegram_crud(client: TestClient) -> None:
     assert r3.json()["deleted"] is True
 
 
+def test_config_status_includes_telegram(client: TestClient) -> None:
+    r = client.get("/api/notifications/config-status")
+    assert r.status_code == 200
+    data = r.json()
+    assert "telegram_configured" in data
+    # Env vars not set in test → False
+    assert data["telegram_configured"] is False
+
+
 def test_notifications_init_db_migrates_legacy_notification_columns(tmp_path: Path) -> None:
     db_path = tmp_path / "legacy_notifications.sqlite"
 
