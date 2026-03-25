@@ -86,9 +86,10 @@ frontend/src/
 
 ## Notifications
 
-Three types:
+Four types:
 - **Email**: SMTP with STARTTLS, dispatched via `asyncio.to_thread(smtplib...)`
 - **Home Assistant**: POST to `/api/services/notify/{service}` with long-lived token
+- **Telegram**: POST to Telegram Bot API `sendMessage` with HTML formatting, bot token and chat ID from env vars
 - **Browser/Push**: Client-side only — `BrowserNotificationsManager.tsx` polls `/trips` every 60s; push_subscriptions table + VAPID keys exist but are not yet used (PWA conversion planned)
 
 Notification message format:
@@ -131,6 +132,8 @@ Trains not yet published for the requested date but expected based on recurring 
 | RENFE_REFERENCE_WEEKS | 10 | Weeks to fetch for price range |
 | RENFE_PRICE_HISTORY_DAYS | 365 | Retention for price_history |
 | PORT | 8000 | Host port |
+| TELEGRAM_BOT_TOKEN | (none) | Telegram bot API token from @BotFather |
+| TELEGRAM_CHAT_ID | (none) | Target Telegram chat/group/channel ID |
 
 ---
 
@@ -180,7 +183,7 @@ Cards use `rounded-xl`, `ring-1`, `shadow-sm`. Responsive 1→2 column grids.
 
 ## Current Status
 
-- Core features complete: trip tracking, price checking, price history, possible trains, email/HA notifications, browser polling
+- Core features complete: trip tracking, price checking, price history, possible trains, email/HA/Telegram notifications, browser polling
 - In progress: PWA conversion + true Web Push (push_subscriptions table exists, VAPID not yet wired up)
 - Notifications UI pages exist but the browser/push flow is not yet fully functional
 

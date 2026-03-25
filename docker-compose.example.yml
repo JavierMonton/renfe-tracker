@@ -33,6 +33,13 @@ services:
       # HA_URL: http://homeassistant.local:8123
       # HA_TOKEN: your-long-lived-access-token
 
+      # ── Telegram ───────────────────────────────────────────────────────────
+      # Uncomment and fill in to enable Telegram price-change alerts.
+      # Create a bot via @BotFather and get your chat ID.
+      #
+      # TELEGRAM_BOT_TOKEN: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+      # TELEGRAM_CHAT_ID: "123456789"
+
     volumes:
       - ./data:/data   # SQLite database persisted on the host
     restart: unless-stopped
