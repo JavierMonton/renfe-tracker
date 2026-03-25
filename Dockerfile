@@ -40,6 +40,7 @@ COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 
 ENV HOME=/app
 ENV DATA_DIR=/data
+VOLUME [ "/data" ]
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
