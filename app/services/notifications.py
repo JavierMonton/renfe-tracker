@@ -263,6 +263,66 @@ def _build_telegram_html(
     return "\n".join(lines)
 
 
+async def _send_telegram_notification(
+    n: dict,
+    summary: str,
+    *,
+    origin: str,
+    destination: str,
+    departure_time: Optional[str],
+    old_price: Optional[float],
+    new_price: float,
+    direction: Optional[str],
+    trip_date: Optional[str],
+    train_identifier: Optional[str],
+    lang: str = "en",
+) -> None:
+    bot_token = config.TELEGRAM_BOT_TOKEN
+    chat_id = config.TELEGRAM_CHAT_ID
+
+    if not bot_token or not chat_id:
+        logger.warning(
+            "Telegram notification skipped: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not configured "
+            "(notification_id=%s). Set these environment variables to enable Telegram alerts.",
+            n.get("id"),
+        )
+        return
+
+    parse_mode = "HTML"
+    try:
+        text = _build_telegram_html(
+            origin=origin,
+            destination=destination,
+            departure_time=departure_time,
+            old_price=old_price,
+            new_price=new_price,
+            direction=direction,
+            trip_date=trip_date,
+            train_identifier=train_identifier,
+            lang=lang,
+        )
+    except Exception:
+        logger.warning("Telegram HTML build failed, falling back to plain text", exc_info=True)
+        text = summary
+        parse_mode = None
+
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload: dict = {
+        "chat_id": chat_id,
+        "text": text,
+    }
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.post(url, json=payload)
+        if resp.status_code >= 400:
+            raise RuntimeError(f"Telegram API failed with status={resp.status_code}")
+        data = resp.json()
+        if not data.get("ok"):
+            raise RuntimeError(f"Telegram API error: {data.get('description', 'unknown')}")
+
+
 async def dispatch_price_change_notifications(
     conn,
     *,
@@ -316,6 +376,20 @@ async def dispatch_price_change_notifications(
                 )
             elif ntype == "home_assistant":
                 await _send_home_assistant_notification(n, summary)
+            elif ntype == "telegram":
+                await _send_telegram_notification(
+                    n,
+                    summary,
+                    origin=origin,
+                    destination=destination,
+                    departure_time=departure_time,
+                    old_price=old_price,
+                    new_price=new_price,
+                    direction=direction,
+                    trip_date=trip_date,
+                    train_identifier=train_identifier,
+                    lang=lang,
+                )
             else:
                 # browser is client-side; ignore here.
                 continue
