@@ -43,6 +43,7 @@ Al buscar trenes, la aplicación muestra rangos de precio estimados basados en d
 
 - Notificaciones de cambios de precio vía email, Home Assistant o notificaciones del navegador
 ![img.png](./website/static/img/notifications-screenshot.png)
+![img.png](./website/static/img/email-screenshot.png)
 
 ## Ejecutar con Docker
 
@@ -103,7 +104,7 @@ When searching for trains, the app shows estimated price ranges based on histori
 
 - Notifications of price changes via email, Home Assistant, or browser notifications:
   ![img.png](./website/static/img/notifications-screenshot.png)
-
+  ![img_1.png](./website/static/img/email-screenshot-en.png)
 
 
 
