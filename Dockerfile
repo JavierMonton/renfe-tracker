@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/pip/ \
   pip install uv \
   && apt-get update && apt-get install -y --no-install-recommends gosu
 
+COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 WORKDIR /app
 
 # Install project and dependencies with uv (frozen lockfile)
@@ -36,7 +37,6 @@ COPY --from=frontend-build /frontend/dist/ app/static/
 # Default run user is 1000:1000; override at runtime with PUID/PGID. No named user needed (entrypoint uses gosu with numeric id).
 RUN chown -R 1000:1000 /app
 
-COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 
 ENV HOME=/app
 ENV DATA_DIR=/data
