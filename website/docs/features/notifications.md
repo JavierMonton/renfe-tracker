@@ -6,7 +6,7 @@ title: Notifications
 
 # Notifications
 
-Whenever a tracked trip changes price, Renfe Tracker can notify you immediately. Three notification systems are supported, and you can configure as many as you like — all active notifications fire on every price change.
+Whenever a tracked trip changes price, Renfe Tracker can notify you immediately. Four notification systems are supported, and you can configure as many as you like — all active notifications fire on every price change.
 
 ## Notification message format
 
@@ -78,6 +78,46 @@ The app calls `POST /api/services/notify/{service}` on your HA instance with the
 ### Automations
 
 Once the notification lands in Home Assistant, you can attach any HA automation to it — send it to a Telegram bot, flash a light, trigger a script, etc.
+
+---
+
+## Telegram {#telegram}
+
+Sends a formatted message to a Telegram chat, group, or channel via a bot whenever a price changes.
+
+### Server-side setup (environment variables)
+
+Create a bot through [@BotFather](https://t.me/BotFather) to get a bot token, then obtain the chat ID of the target chat (your personal chat, a group, or a channel).
+
+```yaml
+environment:
+  TELEGRAM_BOT_TOKEN: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+  TELEGRAM_CHAT_ID: "123456789"
+```
+
+The token and chat ID are read from environment variables only — they are never stored in the database.
+
+### Getting your chat ID
+
+- **Personal chat:** Start a conversation with your bot, then call `https://api.telegram.org/bot<TOKEN>/getUpdates` and look for the `chat.id` field in the response.
+- **Group or channel:** Add the bot to the group/channel, send a message, and use `getUpdates` as above.
+
+### Per-notification setup (UI)
+
+Go to **Notifications → Add notification → Telegram**. No additional fields are required — the bot token and chat ID come from the environment variables above.
+
+### Message format
+
+Messages are sent with Telegram's HTML parse mode and include the route, date, departure time, train identifier, and a price comparison showing the old price (strikethrough) and the new price with the difference:
+
+```
+Price decreased
+
+Madrid → Barcelona
+2026-03-25 | 07:00 | AVE 02250
+
+~~€45.10~~ → €39.50 (−€5.60)
+```
 
 ---
 

@@ -181,6 +181,57 @@ Cards use `rounded-xl`, `ring-1`, `shadow-sm`. Responsive 1→2 column grids.
 
 ---
 
+## Internationalisation (i18n)
+
+### Frontend App
+
+- **Library:** i18next + react-i18next
+- **Locales:** `en`, `es`, `ca` (English, Spanish, Catalan)
+- **Config:** `frontend/src/i18n/index.ts` — detects language from localStorage (`'lang'`), then browser, fallback `en`
+- **Translation files:** `frontend/src/i18n/{en,es,ca}.json` (~173 keys each)
+- **Key namespaces:** `common`, `nav`, `home`, `search`, `results`, `trip`, `notifications`, `configuration`
+- **Language switcher:** rendered in the app footer (EN / ES / CA buttons), writes to localStorage
+
+### Docusaurus Website
+
+- **Locales:** `en` (default), `es`, `ca` — configured in `website/docusaurus.config.ts`
+- **Translation files:** `website/i18n/{es,ca}/`
+  - `docusaurus-plugin-content-docs/current/` — full translated copies of all doc pages
+  - `docusaurus-plugin-content-docs/current.json` — sidebar category labels
+  - `docusaurus-theme-classic/{navbar,footer}.json` — navbar/footer UI strings
+- Navbar includes a locale-selector dropdown
+
+---
+
+## Documentation Website (`website/`)
+
+Docusaurus 3.7.0 static site, deployed to GitHub Pages at `https://JavierMonton.github.io/renfe-tracker/`.
+
+- **Config:** `website/docusaurus.config.ts`, sidebars in `website/sidebars.ts`
+- **Docs served at:** `/` (base URL `/renfe-tracker/`, trailing slash disabled)
+- **Content:** `website/docs/`
+  - `intro.md` (slug `/`) → `installation.md` → `configuration.md`
+  - `features/` category: `trip-tracking.md`, `price-range.md`, `possible-trains.md`, `notifications.md`
+- **Custom CSS:** `website/src/css/custom.css` (Renfe colour palette)
+- **Static assets:** `website/static/img/` (screenshots + logo)
+- **Node version:** ≥18
+
+---
+
+## CI/CD (GitHub Actions)
+
+Three workflows in `.github/workflows/`:
+
+| File | Trigger | What it does |
+|------|---------|--------------|
+| `deploy-docs.yml` | Push to `main` touching `website/**` (or manual) | Runs `npm ci && npm run build` in `website/`, deploys to `gh-pages` branch via `peaceiris/actions-gh-pages` |
+| `pr-tests.yml` | Pull request (open/sync/reopen) | Installs `uv`, runs `ruff check` + `pytest` against Python 3.11 backend |
+| `release-docker.yml` | Push of `v*.*.*` tag | Builds multi-platform Docker image, pushes to Docker Hub as `{DOCKERHUB_USERNAME}/renfe-tracker:{tag}` and `:latest` |
+
+Docker Hub credentials stored as repository secrets `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`.
+
+---
+
 ## Current Status
 
 - Core features complete: trip tracking, price checking, price history, possible trains, email/HA/Telegram notifications, browser polling
