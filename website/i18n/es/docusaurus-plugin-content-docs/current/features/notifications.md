@@ -6,7 +6,7 @@ title: Notificaciones
 
 # Notificaciones
 
-Cuando el precio de un viaje seguido cambia, Renfe Tracker puede notificarte de inmediato. Se admiten tres sistemas de notificación y puedes configurar tantos como quieras — todas las notificaciones activas se disparan en cada cambio de precio.
+Cuando el precio de un viaje seguido cambia, Renfe Tracker puede notificarte de inmediato. Se admiten cuatro sistemas de notificación y puedes configurar tantos como quieras — todas las notificaciones activas se disparan en cada cambio de precio.
 
 ## Formato del mensaje de notificación
 
@@ -78,6 +78,46 @@ La aplicación llama a `POST /api/services/notify/{service}` en tu instancia de 
 ### Automatizaciones
 
 Una vez que la notificación llega a Home Assistant, puedes adjuntarle cualquier automatización de HA — enviarla a un bot de Telegram, hacer parpadear una luz, activar un script, etc.
+
+---
+
+## Telegram {#telegram}
+
+Envía un mensaje formateado a un chat, grupo o canal de Telegram a través de un bot cada vez que cambia un precio.
+
+### Configuración del servidor (variables de entorno)
+
+Crea un bot a través de [@BotFather](https://t.me/BotFather) para obtener el token del bot y, a continuación, obtén el ID del chat de destino (tu chat personal, un grupo o un canal).
+
+```yaml
+environment:
+  TELEGRAM_BOT_TOKEN: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+  TELEGRAM_CHAT_ID: "123456789"
+```
+
+El token y el ID del chat se leen únicamente desde las variables de entorno — nunca se almacenan en la base de datos.
+
+### Cómo obtener tu ID de chat
+
+- **Chat personal:** Inicia una conversación con tu bot y luego llama a `https://api.telegram.org/bot<TOKEN>/getUpdates`. Busca el campo `chat.id` en la respuesta.
+- **Grupo o canal:** Añade el bot al grupo o canal, envía un mensaje y usa `getUpdates` como se indica arriba.
+
+### Configuración por notificación (interfaz)
+
+Ve a **Notificaciones → Añadir notificación → Telegram**. No se requieren campos adicionales — el token del bot y el ID del chat provienen de las variables de entorno anteriores.
+
+### Formato del mensaje
+
+Los mensajes se envían con el modo de análisis HTML de Telegram e incluyen la ruta, la fecha, la hora de salida, el identificador del tren y una comparación de precios con el precio anterior (tachado) y el nuevo precio con la diferencia:
+
+```
+Precio bajado
+
+Madrid → Barcelona
+2026-03-25 | 07:00 | AVE 02250
+
+~~€45.10~~ → €39.50 (−€5.60)
+```
 
 ---
 

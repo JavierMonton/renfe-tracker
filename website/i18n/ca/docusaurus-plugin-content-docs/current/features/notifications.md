@@ -6,7 +6,7 @@ title: Notificacions
 
 # Notificacions
 
-Quan el preu d'un viatge seguit canvia, Renfe Tracker pot notificar-te immediatament. S'admeten tres sistemes de notificació i pots configurar-ne tants com vulguis — totes les notificacions actives s'envien en cada canvi de preu.
+Quan el preu d'un viatge seguit canvia, Renfe Tracker pot notificar-te immediatament. S'admeten quatre sistemes de notificació i pots configurar-ne tants com vulguis — totes les notificacions actives s'envien en cada canvi de preu.
 
 ## Format del missatge de notificació
 
@@ -78,6 +78,46 @@ L'aplicació crida `POST /api/services/notify/{service}` a la teva instància de
 ### Automatitzacions
 
 Un cop la notificació arriba a Home Assistant, pots adjuntar-hi qualsevol automatització de HA — enviar-la a un bot de Telegram, fer parpellejar un llum, activar un script, etc.
+
+---
+
+## Telegram {#telegram}
+
+Envia un missatge formatat a un xat, grup o canal de Telegram a través d'un bot cada vegada que canvia un preu.
+
+### Configuració del servidor (variables d'entorn)
+
+Crea un bot a través de [@BotFather](https://t.me/BotFather) per obtenir el token del bot i, a continuació, obtén l'ID del xat de destí (el teu xat personal, un grup o un canal).
+
+```yaml
+environment:
+  TELEGRAM_BOT_TOKEN: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+  TELEGRAM_CHAT_ID: "123456789"
+```
+
+El token i l'ID del xat es llegeixen únicament des de les variables d'entorn — mai no s'emmagatzemen a la base de dades.
+
+### Com obtenir el teu ID de xat
+
+- **Xat personal:** Inicia una conversa amb el teu bot i crida `https://api.telegram.org/bot<TOKEN>/getUpdates`. Busca el camp `chat.id` a la resposta.
+- **Grup o canal:** Afegeix el bot al grup o canal, envia un missatge i usa `getUpdates` com s'indica més amunt.
+
+### Configuració per notificació (interfície)
+
+Ves a **Notificacions → Afegir notificació → Telegram**. No cal cap camp addicional — el token del bot i l'ID del xat provenen de les variables d'entorn anteriors.
+
+### Format del missatge
+
+Els missatges s'envien amb el mode d'anàlisi HTML de Telegram i inclouen la ruta, la data, l'hora de sortida, l'identificador del tren i una comparació de preus amb el preu anterior (ratllat) i el nou preu amb la diferència:
+
+```
+Preu baixat
+
+Madrid → Barcelona
+2026-03-25 | 07:00 | AVE 02250
+
+~~€45.10~~ → €39.50 (−€5.60)
+```
 
 ---
 
