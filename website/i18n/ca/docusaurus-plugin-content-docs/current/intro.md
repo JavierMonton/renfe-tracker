@@ -38,18 +38,16 @@ El frontend és una aplicació de pàgina única React 19 + TypeScript servida p
 
 ## Inici ràpid
 
+Necessites tenir [Docker](https://docs.docker.com/get-docker/) instal·lat a la teva màquina.
+
 ```bash
-# 1. Clona el repositori
-git clone https://github.com/JavierMonton/renfe-tracker.git
-cd renfe-tracker
+# 1. Descarrega el fitxer compose
+curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml
 
-# 2. Copia el fitxer compose d'exemple
-cp docker-compose.example.yml docker-compose.yml
-
-# 3. Inicia l'aplicació
+# 2. Inicia l'aplicació (la imatge es descarrega automàticament de Docker Hub)
 docker compose up -d
 
-# 4. Obre http://localhost:8000
+# 3. Obre http://localhost:8000
 ```
 
 Consulta la pàgina d'[Instal·lació](./installation) per a més detalls, incloent-hi les opcions de `docker run` i desenvolupament local.

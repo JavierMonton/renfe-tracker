@@ -38,6 +38,8 @@ The frontend is a React 19 + TypeScript single-page app served by the same proce
 
 ## Quick start
 
+You need [Docker](https://docs.docker.com/get-docker/) installed on your machine.
+
 ```bash
 # 1. Get the compose file
 curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml

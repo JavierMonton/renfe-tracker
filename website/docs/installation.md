@@ -6,6 +6,8 @@ title: Installation
 
 # Installation
 
+You need [Docker](https://docs.docker.com/get-docker/) installed on your machine.
+
 Renfe Tracker is distributed as a Docker image. The **recommended** way to run it is with Docker Compose, but plain `docker run` and local development without Docker are also supported.
 
 ---
@@ -17,12 +19,6 @@ Docker Compose is the simplest option for a permanent, always-on deployment. The
 ### 1. Get the compose file
 
 ```bash
-# Option A – clone the repo (also gives you the example file)
-git clone https://github.com/JavierMonton/renfe-tracker.git
-cd renfe-tracker
-cp docker-compose.example.yml docker-compose.yml
-
-# Option B – download just the example file
 curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml
 ```
 

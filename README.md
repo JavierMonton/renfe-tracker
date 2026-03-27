@@ -53,10 +53,10 @@ Expone el puerto **8000** y necesita un **volumen de datos** en `/data` (base de
 
 ### Ejecutar con compose (recomendado)
 
-Copia el [fichero compose de ejemplo](docker-compose.example.yml) e inícialo:
+Necesitas tener [Docker](https://docs.docker.com/get-docker/) instalado. Descarga el fichero compose e inícialo:
 
 ```bash
-cp docker-compose.example.yml docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml
 docker compose up -d
 ```
 
@@ -116,10 +116,10 @@ It exposes port **8000** and expects a **data volume** at `/data` (SQLite DB, GT
 
 ### Running with compose (recommended)
 
-Copy the [example compose file](docker-compose.example.yml) and start:
+You need [Docker](https://docs.docker.com/get-docker/) installed. Download the compose file and start:
 
 ```bash
-cp docker-compose.example.yml docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml
 docker compose up -d
 ```
 

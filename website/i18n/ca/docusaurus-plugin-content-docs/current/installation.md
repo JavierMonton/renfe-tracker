@@ -6,6 +6,8 @@ title: Instal·lació
 
 # Instal·lació
 
+Necessites tenir [Docker](https://docs.docker.com/get-docker/) instal·lat a la teva màquina.
+
 Renfe Tracker es distribueix com a imatge Docker. La manera **recomanada** d'executar-lo és amb Docker Compose, tot i que `docker run` i el desenvolupament local sense Docker també estan admesos.
 
 ---
@@ -14,12 +16,10 @@ Renfe Tracker es distribueix com a imatge Docker. La manera **recomanada** d'exe
 
 Docker Compose és l'opció més senzilla per a un desplegament permanent i sempre actiu. El fitxer compose gestiona els volums, els reinicis automàtics i la configuració de variables d'entorn en un sol lloc.
 
-### 1. Obtenir els fitxers
+### 1. Obtenir el fitxer compose
 
 ```bash
-git clone https://github.com/JavierMonton/renfe-tracker.git
-cd renfe-tracker
-cp docker-compose.example.yml docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/JavierMonton/renfe-tracker/main/docker-compose.example.yml
 ```
 
 ### 2. (Opcional) Configurar variables d'entorn
@@ -29,7 +29,7 @@ Obre `docker-compose.yml` i descomenta / omple les opcions que necessitis:
 ```yaml
 services:
   app:
-    build: .
+    image: jmonton/renfe-tracker:latest
     ports:
       - "${PORT:-8000}:8000"
     environment:
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 ```
 
-### 3. Construir i iniciar
+### 3. Iniciar
 
 ```bash
 docker compose up -d
@@ -68,7 +68,7 @@ PORT=9000 docker compose up -d
 # Aturar
 docker compose down
 
-# Obtenir el darrer codi i reconstruir
+# Obtenir la darrera imatge i reiniciar
 docker compose pull
 docker compose up -d
 ```
@@ -81,14 +81,6 @@ Les dades a `./data` mai es modifiquen amb aquestes ordres.
 
 Usa aquesta opció si prefereixes gestionar el contenidor manualment o integrar-lo en una configuració existent.
 
-### Construir la imatge
-
-```bash
-git clone https://github.com/JavierMonton/renfe-tracker.git
-cd renfe-tracker
-docker build -t renfe-tracker .
-```
-
 ### Executar el contenidor
 
 ```bash
@@ -97,7 +89,7 @@ docker run -d \
   --restart unless-stopped \
   -p 8000:8000 \
   -v "$(pwd)/data:/data" \
-  renfe-tracker
+  jmonton/renfe-tracker:latest
 ```
 
 Amb variables d'entorn per a correu electrònic i Home Assistant:
@@ -114,7 +106,15 @@ docker run -d \
   -e SMTP_PASSWORD=your-password \
   -e HA_URL=http://homeassistant.local:8123 \
   -e HA_TOKEN=your-ha-token \
-  renfe-tracker
+  jmonton/renfe-tracker:latest
+```
+
+Per actualitzar a una versió més recent:
+
+```bash
+docker pull jmonton/renfe-tracker:latest
+docker rm -f renfe-tracker
+# torna a executar l'ordre docker run anterior
 ```
 
 Obre **http://localhost:8000**.
