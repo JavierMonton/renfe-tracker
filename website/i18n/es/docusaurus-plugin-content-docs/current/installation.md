@@ -6,9 +6,9 @@ title: Instalación
 
 # Instalación
 
-Necesitas tener [Docker](https://docs.docker.com/get-docker/) instalado en tu máquina.
+Renfe Tracker puede ejecutarse con [Docker](https://docs.docker.com/get-docker/) (Opciones 1 y 2, recomendado) o de forma nativa con [uv](https://docs.astral.sh/uv/) y Node.js — sin necesidad de Docker (Opción 3).
 
-Renfe Tracker se distribuye como imagen Docker. La forma **recomendada** de ejecutarlo es con Docker Compose, aunque también se admiten `docker run` y el desarrollo local sin Docker.
+La forma **recomendada** de ejecutarlo es con Docker Compose, aunque también se admiten `docker run` y la ejecución nativa sin Docker.
 
 ---
 
@@ -121,29 +121,42 @@ Abre **http://localhost:8000**.
 
 ---
 
-## Opción 3 — Desarrollo local (sin Docker) {#local-dev}
+## Opción 3 — Sin Docker (UV + Node.js) {#no-docker}
 
-Útil si quieres modificar el código. Requiere [uv](https://github.com/astral-sh/uv) (gestor de paquetes Python) y Node.js 18+.
+Ejecuta todo de forma nativa, sin necesidad de Docker. Requiere [uv](https://docs.astral.sh/uv/) (gestor de paquetes Python) y Node.js 18+.
 
-### Backend
+### Modo producción
+
+Compila el frontend una vez y ejecuta un único proceso que sirve tanto la API como la interfaz web:
 
 ```bash
-# Instalar dependencias
+# Instalar dependencias Python
 uv sync
 
-# Iniciar el servidor API (recarga automática al cambiar el código)
+# Compilar el frontend
+cd frontend && npm install && npm run build && cd ..
+
+# Iniciar (API + frontend en http://localhost:8000)
+uv run uvicorn app.main:app --port 8000
+```
+
+Abre **http://localhost:8000**.
+
+### Modo desarrollo
+
+Para colaboradores que quieren recarga en caliente en el frontend y el backend. Requiere dos terminales:
+
+```bash
+# Terminal 1 — Backend (recarga automática al cambiar el código)
+uv sync
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### Frontend
-
-En una segunda terminal:
-
 ```bash
+# Terminal 2 — Frontend (servidor de desarrollo Vite en http://localhost:5173)
 cd frontend
 npm install
-npm run dev      # Servidor de desarrollo Vite en http://localhost:5173
-                 # Todas las peticiones /api se redirigen a :8000
+npm run dev
 ```
 
 El servidor de desarrollo Vite redirige las llamadas `/api` al backend FastAPI, por lo que obtienes recarga en caliente en el frontend mientras el backend gestiona los datos.

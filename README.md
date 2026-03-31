@@ -19,11 +19,13 @@ y seguir viajes para recibir alertas cuando el precio cambie.
   - [Funcionalidades](#funcionalidades)
   - [Ejecutar con Docker](#ejecutar-con-docker)
     - [Ejecutar con compose (recomendado para 24/7)](#ejecutar-con-compose-recomendado)
+  - [Ejecutar sin Docker](#ejecutar-sin-docker)
   - [Configuración](#configuración)
 - [English](#english)
   - [Features](#features)
   - [Run with Docker](#run-with-docker)
     - [Running with compose (recommended for 24/7)](#running-with-compose-recommended)
+  - [Run without Docker](#run-without-docker)
   - [Configuration](#configuration)
 
 ---
@@ -68,6 +70,23 @@ El fichero compose monta `./data` en `/data` y usa `restart: unless-stopped` par
 
 **Búsqueda (Renfe):** La aplicación usa la **librería Renfe integrada** (horarios GTFS + scraping de precios en vivo vía DWR). No se necesita ningún servidor MCP ni navegador externo; todo funciona dentro de este proyecto. Los datos GTFS se descargan automáticamente en el primer uso en `DATA_DIR/renfe_schedule` (en Docker, `/data/renfe_schedule`).
 Para probar la búsqueda **sin** realizar llamadas reales a Renfe, establece `RENFE_MOCK=1` (o `RENFE_USE_MOCK=true`): la API devuelve una lista fija de trenes de ejemplo.
+
+## Ejecutar sin Docker
+
+Si no tienes Docker, puedes ejecutar la aplicación directamente con [uv](https://docs.astral.sh/uv/) (gestor de paquetes Python) y Node.js 18+.
+
+```bash
+# Instalar dependencias Python
+uv sync
+
+# Compilar el frontend
+cd frontend && npm install && npm run build && cd ..
+
+# Iniciar (API + frontend en http://localhost:8000)
+uv run uvicorn app.main:app --port 8000
+```
+
+Abre **http://localhost:8000**. Los datos se guardan en `./data` (base de datos SQLite + datos GTFS).
 
 ## Configuración
 
@@ -131,6 +150,23 @@ The compose file mounts `./data` to `/data` and uses `restart: unless-stopped` s
 
 **Search (Renfe):** The app uses the **integrated Renfe library** (GTFS schedules + live price scraping via DWR). No separate MCP server or browser is required; everything runs inside this project. GTFS data is downloaded automatically on first use into `DATA_DIR/renfe_schedule` (in Docker, `/data/renfe_schedule`).
 To test search **without** any real Renfe calls, set `RENFE_MOCK=1` (or `RENFE_USE_MOCK=true`): the API returns a fixed list of example trains.
+
+## Run without Docker
+
+If you don't have Docker, you can run the app directly with [uv](https://docs.astral.sh/uv/) (Python package manager) and Node.js 18+.
+
+```bash
+# Install Python dependencies
+uv sync
+
+# Build the frontend
+cd frontend && npm install && npm run build && cd ..
+
+# Start (API + frontend at http://localhost:8000)
+uv run uvicorn app.main:app --port 8000
+```
+
+Open **http://localhost:8000**. Data is stored in `./data` (SQLite database + GTFS data).
 
 ## Configuration
 

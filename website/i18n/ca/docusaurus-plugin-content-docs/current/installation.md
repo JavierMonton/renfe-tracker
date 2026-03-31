@@ -6,9 +6,9 @@ title: Instal·lació
 
 # Instal·lació
 
-Necessites tenir [Docker](https://docs.docker.com/get-docker/) instal·lat a la teva màquina.
+Renfe Tracker pot executar-se amb [Docker](https://docs.docker.com/get-docker/) (Opcions 1 i 2, recomanat) o de manera nativa amb [uv](https://docs.astral.sh/uv/) i Node.js — sense necessitat de Docker (Opció 3).
 
-Renfe Tracker es distribueix com a imatge Docker. La manera **recomanada** d'executar-lo és amb Docker Compose, tot i que `docker run` i el desenvolupament local sense Docker també estan admesos.
+La manera **recomanada** d'executar-lo és amb Docker Compose, tot i que `docker run` i l'execució nativa sense Docker també estan admesos.
 
 ---
 
@@ -121,29 +121,42 @@ Obre **http://localhost:8000**.
 
 ---
 
-## Opció 3 — Desenvolupament local (sense Docker) {#local-dev}
+## Opció 3 — Sense Docker (UV + Node.js) {#no-docker}
 
-Útil si vols modificar el codi. Requereix [uv](https://github.com/astral-sh/uv) (gestor de paquets Python) i Node.js 18+.
+Executa-ho tot de manera nativa, sense necessitat de Docker. Requereix [uv](https://docs.astral.sh/uv/) (gestor de paquets Python) i Node.js 18+.
 
-### Backend
+### Mode producció
+
+Compila el frontend una vegada i executa un únic procés que serveix tant l'API com la interfície web:
 
 ```bash
-# Instal·lar dependències
+# Instal·lar dependències Python
 uv sync
 
-# Iniciar el servidor API (recàrrega automàtica en canviar el codi)
+# Compilar el frontend
+cd frontend && npm install && npm run build && cd ..
+
+# Iniciar (API + frontend a http://localhost:8000)
+uv run uvicorn app.main:app --port 8000
+```
+
+Obre **http://localhost:8000**.
+
+### Mode desenvolupament
+
+Per a col·laboradors que volen recàrrega en calent al frontend i al backend. Requereix dos terminals:
+
+```bash
+# Terminal 1 — Backend (recàrrega automàtica en canviar el codi)
+uv sync
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### Frontend
-
-En un segon terminal:
-
 ```bash
+# Terminal 2 — Frontend (servidor de desenvolupament Vite a http://localhost:5173)
 cd frontend
 npm install
-npm run dev      # Servidor de desenvolupament Vite a http://localhost:5173
-                 # Totes les peticions /api es redirigeixen a :8000
+npm run dev
 ```
 
 El servidor de desenvolupament Vite redirigeix les crides `/api` al backend FastAPI, de manera que obtens recàrrega en calent al frontend mentre el backend gestiona les dades.

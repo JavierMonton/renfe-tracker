@@ -6,9 +6,9 @@ title: Installation
 
 # Installation
 
-You need [Docker](https://docs.docker.com/get-docker/) installed on your machine.
+Renfe Tracker can run with [Docker](https://docs.docker.com/get-docker/) (Options 1 and 2, recommended) or natively with [uv](https://docs.astral.sh/uv/) and Node.js — no Docker needed (Option 3).
 
-Renfe Tracker is distributed as a Docker image. The **recommended** way to run it is with Docker Compose, but plain `docker run` and local development without Docker are also supported.
+The **recommended** way to run it is with Docker Compose, but plain `docker run` and native Python execution without Docker are also supported.
 
 ---
 
@@ -121,29 +121,42 @@ Open **http://localhost:8000**.
 
 ---
 
-## Option 3 — Local development (no Docker) {#local-dev}
+## Option 3 — Without Docker (UV + Node.js) {#no-docker}
 
-This is useful if you want to hack on the code. It requires [uv](https://github.com/astral-sh/uv) (Python package manager) and Node.js 18+.
+Run everything natively — no Docker required. You need [uv](https://docs.astral.sh/uv/) (Python package manager) and Node.js 18+.
 
-### Backend
+### Production mode
+
+Build the frontend once, then run a single server process that serves both the API and the web interface:
 
 ```bash
-# Install dependencies
+# Install Python dependencies
 uv sync
 
-# Start the API server (auto-reload on code changes)
+# Build the frontend
+cd frontend && npm install && npm run build && cd ..
+
+# Start (API + frontend at http://localhost:8000)
+uv run uvicorn app.main:app --port 8000
+```
+
+Open **http://localhost:8000**.
+
+### Development mode
+
+For contributors who want hot-reload on both frontend and backend. Requires two terminals:
+
+```bash
+# Terminal 1 — Backend (auto-reload on code changes)
+uv sync
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### Frontend
-
-In a second terminal:
-
 ```bash
+# Terminal 2 — Frontend (Vite dev server on http://localhost:5173)
 cd frontend
 npm install
-npm run dev      # Vite dev server on http://localhost:5173
-                 # All /api requests are proxied to :8000
+npm run dev
 ```
 
 The Vite dev server proxies `/api` calls to the FastAPI backend, so you get hot-reload on the frontend while the backend handles data.
