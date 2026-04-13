@@ -11,12 +11,12 @@ RUN npm run build
 
 FROM python:3.11-slim AS base
 
-# Install uv and gosu (entrypoint fixes volume permissions so app can create DB on first run)
+# Install uv, gosu and wget (wget is used by docker-compose healthcheck)
 RUN --mount=type=cache,target=/root/.cache/pip/ \
     --mount=type=cache,target=/var/lib/apt/ \
     --mount=type=cache,target=/var/cache/apt/ \
   pip install uv \
-  && apt-get update && apt-get install -y --no-install-recommends gosu
+  && apt-get update && apt-get install -y --no-install-recommends gosu wget
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 WORKDIR /app
