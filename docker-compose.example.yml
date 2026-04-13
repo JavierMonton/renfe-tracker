@@ -42,4 +42,10 @@ services:
 
     volumes:
       - ./data:/data   # SQLite database persisted on the host
+    healthcheck:       # ensure the app is responding on the internal HTTP port
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-8000}/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
