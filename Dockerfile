@@ -11,7 +11,8 @@ RUN npm run build
 
 FROM python:3.11-slim AS base
 
-# Install uv, gosu and wget (wget is used by docker-compose healthcheck)
+# Install uv and gosu (entrypoint fixes volume permissions so app can create DB on first run)
+# Install wget for the docker-compose HTTP healthcheck probe.
 RUN --mount=type=cache,target=/root/.cache/pip/ \
     --mount=type=cache,target=/var/lib/apt/ \
     --mount=type=cache,target=/var/cache/apt/ \
