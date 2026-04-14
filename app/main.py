@@ -56,6 +56,33 @@ app.include_router(trips_router, prefix="/api")
 app.include_router(search_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
 
+
+@app.get("/health")
+async def health():
+    """Health check endpoint for status, db and scheduler."""
+    db_ok = False
+    try:
+        from app.db.connection import get_connection
+        conn = await get_connection(app.state.db_path)
+        await conn.execute("SELECT 1")
+        db_ok = True
+    except Exception:
+        pass
+
+    scheduler_ok = scheduler.running
+
+    if db_ok and scheduler_ok:
+        return {"status": "ok", "db": "ok", "scheduler": "ok"}
+
+    return JSONResponse(
+        status_code=503,
+        content={
+            "status": "degraded",
+            "db": "ok" if db_ok else "error",
+            "scheduler": "ok" if scheduler_ok else "error",
+        },
+    )
+
 # Static files last so /api takes precedence
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 frontend_dist_dir = os.path.join(repo_root, "frontend", "dist")
